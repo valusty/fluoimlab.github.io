@@ -42,6 +42,13 @@
     },
   ];
 
+  // Hidden sections — accessible by URL hash but not shown in sidebar navigation
+  const HIDDEN_SECTIONS = [
+    { id: 'links' },
+  ];
+
+  const ALL_SECTION_IDS = SECTIONS.map(s => s.id).concat(HIDDEN_SECTIONS.map(s => s.id));
+
   const DEFAULT_SECTION = 'about';
   const DEFAULT_LANG = 'uk';
   const DEFAULT_THEME = 'dark';
@@ -233,14 +240,14 @@
   // Navigation
   // ---------------------------------------------------------------------------
   function navigateTo(sectionId) {
-    if (!SECTIONS.find((s) => s.id === sectionId)) {
+    if (!ALL_SECTION_IDS.includes(sectionId)) {
       sectionId = DEFAULT_SECTION;
     }
 
     currentSection = sectionId;
     window.location.hash = sectionId;
 
-    // Update active nav link
+    // Update active nav link (hidden sections won't match any sidebar link)
     document.querySelectorAll('.sidebar-nav a').forEach((a) => {
       a.classList.toggle('active', a.dataset.section === sectionId);
     });
@@ -256,6 +263,13 @@
     const content = $('#content');
     content.innerHTML = '<div class="content-loading">Loading…</div>';
 
+    // Hidden "links" section — render inline HTML instead of fetching markdown
+    if (sectionId === 'links') {
+      content.innerHTML = buildLinksPage(lang);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const url = `${sectionId}/content_${lang}.md`;
 
     try {
@@ -264,6 +278,12 @@
       const md = await resp.text();
       content.innerHTML = marked.parse(md);
       updateImagePaths(content, sectionId);
+
+      // Inject Ukraine support banner at the top of the English "about" page
+      if (sectionId === 'about' && lang === 'en') {
+        injectUkraineBanner(content);
+      }
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(`Failed to load ${url}:`, err);
@@ -273,6 +293,65 @@
         <p>Please ensure the file exists in the repository.</p>
       `;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Ukraine support banner (English about page only)
+  // ---------------------------------------------------------------------------
+  function injectUkraineBanner(container) {
+    const banner = document.createElement('a');
+    banner.className = 'ukraine-banner';
+    banner.href = '#links';
+    banner.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo('links');
+    });
+
+    banner.innerHTML = `
+      <div class="ukraine-banner-top">
+        We are Ukrainian scientists, and till we work, our country suffers from the war.<br>
+        russia invaded Ukraine, killing tens of thousands of civilians and displacing millions more.<br>
+        Help us defend freedom, democracy and Ukraine's right to exist.
+      </div>
+      <div class="ukraine-banner-bottom">
+        Support Ukraine
+      </div>
+    `;
+
+    container.insertBefore(banner, container.firstChild);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build Links page (hidden section)
+  // ---------------------------------------------------------------------------
+  function buildLinksPage(lang) {
+    const title = lang === 'uk' ? 'Корисні посилання' : 'Useful Links';
+    const subtitle = lang === 'uk'
+      ? 'Ресурси для підтримки України та корисні посилання'
+      : 'Resources to support Ukraine and useful links';
+
+    return `
+      <h1>${title}</h1>
+      <p>${subtitle}</p>
+      <div class="links-grid">
+        <a class="link-card" href="https://u24.gov.ua/" target="_blank" rel="noopener noreferrer">
+          <span class="link-card-title">United24</span>
+          <span class="link-card-desc">${lang === 'uk' ? 'Офіційна платформа збору коштів для України' : 'Official fundraising platform of Ukraine'}</span>
+        </a>
+        <a class="link-card" href="https://savelife.in.ua/en/" target="_blank" rel="noopener noreferrer">
+          <span class="link-card-title">Come Back Alive</span>
+          <span class="link-card-desc">${lang === 'uk' ? 'Фонд підтримки Збройних Сил України' : 'Foundation supporting the Armed Forces of Ukraine'}</span>
+        </a>
+        <a class="link-card" href="https://prytulafoundation.org/en" target="_blank" rel="noopener noreferrer">
+          <span class="link-card-title">Serhiy Prytula Foundation</span>
+          <span class="link-card-desc">${lang === 'uk' ? 'Благодійний фонд Сергія Притули' : 'Serhiy Prytula Charity Foundation'}</span>
+        </a>
+        <a class="link-card" href="https://www.razomforukraine.org/" target="_blank" rel="noopener noreferrer">
+          <span class="link-card-title">Razom for Ukraine</span>
+          <span class="link-card-desc">${lang === 'uk' ? 'Міжнародна організація підтримки України' : 'International organization supporting Ukraine'}</span>
+        </a>
+      </div>
+    `;
   }
 
   // ---------------------------------------------------------------------------

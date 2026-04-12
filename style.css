@@ -67,8 +67,8 @@
   --blockquote-text:        var(--text-secondary);
 
   /* Table */
-  --table-header-bg:        rgba(154, 184, 106, 0.2);
-  --table-header-text:      var(--color-chartreuse-dark);
+  --table-header-bg:        rgba(192, 138, 156, 0.2);
+  --table-header-text:      var(--color-magenta-dark);
   --table-row-alt:          rgba(154, 184, 106, 0.04);
   --table-row-hover:        var(--color-chartreuse-pale);
   --table-border:           var(--border-color);
@@ -85,21 +85,21 @@
 
   /* Controls */
   --toggle-bg:              rgba(255, 255, 255, 0.08);
-  --toggle-active-bg:       var(--color-chartreuse);
+  --toggle-active-bg:       var(--color-magenta);
   --toggle-active-text:     #1A2C16;
   --toggle-text:            var(--sidebar-text);
 
   /* Loading spinner */
-  --spinner-color:          var(--color-chartreuse);
+  --spinner-color:          var(--color-magenta);
 }
 
 /* --- Light Theme --- */
 [data-theme="light"] {
-  /* Primary — soft chartreuse */
-  --color-chartreuse:       #7E9E48;
-  --color-chartreuse-light: #B5CC8A;
-  --color-chartreuse-pale:  #E5EDD4;
-  --color-chartreuse-dark:  #5A7830;
+  /* Primary — muted chartreuse */
+  --color-chartreuse:       #8A9D6A;
+  --color-chartreuse-light: #B5C49A;
+  --color-chartreuse-pale:  #E6EBD8;
+  --color-chartreuse-dark:  #687E4E;
 
   /* Accent — muted cyan */
   --color-cyan:             #6A9CA0;
@@ -118,7 +118,7 @@
   --sidebar-bg-hover:       #446230;
   --sidebar-text:           #D4E4B0;
   --sidebar-text-active:    #FFFFFF;
-  --sidebar-accent:         #D8AAB8;
+  --sidebar-accent:         #C87A94;
   --sidebar-border:         rgba(255, 255, 255, 0.12);
   --sidebar-header-bg:      #304820;
 
@@ -145,7 +145,7 @@
 
   /* Links */
   --link-color:             var(--color-cyan-dark);
-  --link-hover:             var(--color-magenta);
+  --link-hover:             var(--color-magenta-dark);
 
   /* Blockquote */
   --blockquote-bg:          var(--color-chartreuse-pale);
@@ -153,9 +153,9 @@
   --blockquote-text:        var(--text-secondary);
 
   /* Table */
-  --table-header-bg:        var(--color-chartreuse);
+  --table-header-bg:        var(--color-magenta);
   --table-header-text:      #FFFFFF;
-  --table-row-alt:          rgba(126, 158, 72, 0.06);
+  --table-row-alt:          rgba(138, 157, 106, 0.06);
   --table-row-hover:        var(--color-chartreuse-pale);
   --table-border:           var(--border-color);
 
@@ -171,12 +171,12 @@
 
   /* Controls */
   --toggle-bg:              rgba(255, 255, 255, 0.18);
-  --toggle-active-bg:       var(--color-chartreuse);
+  --toggle-active-bg:       var(--color-magenta);
   --toggle-active-text:     #FFFFFF;
   --toggle-text:            var(--sidebar-text);
 
   /* Loading spinner */
-  --spinner-color:          var(--color-chartreuse);
+  --spinner-color:          var(--color-magenta);
 }
 
 /* --- Layout Variables (shared) --- */
@@ -648,6 +648,91 @@ img {
 .content em {
   font-style: italic;
   color: var(--text-secondary);
+}
+
+/* --- Ukraine Support Banner --- */
+.ukraine-banner {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: box-shadow var(--transition-normal), transform var(--transition-fast);
+  cursor: pointer;
+}
+
+.ukraine-banner:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.ukraine-banner-top {
+  background-color: #0057B8;
+  padding: 1rem 1.5rem;
+  color: #000;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+}
+
+.ukraine-banner-bottom {
+  background-color: #FFD700;
+  padding: 1rem 1.5rem;
+  color: #000;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* --- Links Page — Card Grid --- */
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--card-shadow);
+  transition: box-shadow var(--transition-normal), transform var(--transition-fast),
+              background-color var(--transition-theme), border-color var(--transition-theme);
+  text-decoration: none;
+  color: inherit;
+}
+
+.link-card:hover {
+  box-shadow: 0 4px 18px var(--card-shadow);
+  transform: translateY(-3px);
+  border-color: var(--color-magenta);
+  text-decoration: none;
+}
+
+.link-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--link-color);
+}
+
+.link-card:hover .link-card-title {
+  color: var(--link-hover);
+}
+
+.link-card-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* --- Responsive --- */
