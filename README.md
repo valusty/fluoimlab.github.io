@@ -1,5 +1,7 @@
 # FIL — Fluorescence Imaging Laboratory
 
+__Depricated version__
+
 Вебсайт лабораторії флуоресцентної візуалізації.
 Website of the Fluorescence Imaging Laboratory.
 
