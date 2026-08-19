@@ -1,71 +1,91 @@
-# Events
+---
+eyebrow: Training and Community
+title: Events
+subtitle: Seminars, workshops and training courses. Registration is open to researchers from other institutions.
+---
 
 ## Upcoming Events
 
-### *Event Title*
-**📅 Date:** *dd.mm.yyyy*
-**🕐 Time:** *hh:mm*
-**📍 Location:** *specify location or "online"*
-**👤 Organizer:** *organizer name*
+<!-- EVENTS. Every `###` is a new event.
+     date:   date in YYYY-MM-DD format (this produces the date block on the left)
+     status: open · waitlist · full · closed · past
+     link:   registration form address -->
 
-*Event description. Target audience, topics covered, what participants need to prepare.*
+:::events
+### *Workshop title*
+date: 2026-10-14
+time: 10:00 – 17:00
+location: *auditorium / address*
+format: In person
+organizer: *organiser name*
+audience: *graduate students and researchers*
+status: open
+link: https://example.com/registration
 
-🔗 [Registration](*registration form link*)
+*Event description: target audience, topics covered, what participants need to
+prepare.*
 
----
-
-### *Event Title 2*
-**📅 Date:** *dd.mm.yyyy*
-**🕐 Time:** *hh:mm*
-**📍 Location:** *specify location*
+### *Seminar title*
+date: 2026-11-15
+time: 15:00 – 16:30
+location: Online
+format: Webinar
+status: waitlist
+link: https://example.com/registration
 
 *Event description.*
 
-🔗 [Registration](*link*)
+### *School title*
+date: 2026-12-02
+time: 09:00 – 18:00
+location: *auditorium / address*
+format: Hybrid
+status: full
 
----
+*Event description.*
+:::
 
 ## Regular Events
 
+:::cards
 ### Laboratory Seminar
-**📅 Frequency:** *e.g., weekly on Thursdays*
-**🕐 Time:** *hh:mm*
-**📍 Location:** *specify location*
+tag: Weekly
+meta: *e.g. every Thursday at 16:00*
+image: img/workshop.svg
 
-*Seminar description. Format, topics, who can join.*
+*Seminar description: format, topics, who can join.*
 
----
+### Journal Club
+tag: Biweekly
+meta: *specify day and time*
 
-## Courses & Workshops
+*Discussion of recent publications on microscopy and image analysis.*
+:::
 
-### *Course Title*
-**📅 Period:** *dd.mm – dd.mm.yyyy*
-**⏱ Duration:** *e.g., 8 sessions, 2 hours each*
-**📍 Format:** *in-person / online / hybrid*
-**👥 Target audience:** *students / graduate students / researchers*
+## Courses and Training Programmes
 
-*Course description. Syllabus, prerequisites, what participants will gain upon completion.*
+:::cards
+### *Course title*
+tag: Course
+meta: *dd.mm – dd.mm.yyyy · 8 sessions, 2 hours each*
+link: https://example.com/registration
+link_label: Register
 
-**Syllabus:**
+**Format:** *in person / online / hybrid*
+**Audience:** *students / graduate students / researchers*
+
+*Course description: syllabus, prerequisites, what participants gain upon
+completion.*
+
 1. *Lesson topic 1*
 2. *Lesson topic 2*
 3. *Lesson topic 3*
-
-🔗 [Registration](*link*)
-
----
+:::
 
 ## Event Archive
 
-### 2025
-
 | Date | Event | Type | Materials |
 |------|-------|------|-----------|
-| *dd.mm.yyyy* | *Event title* | Seminar | [Slides](*link*) |
-| *dd.mm.yyyy* | *Event title* | Workshop | [Recording](*link*) |
-
-### 2024
-
-| Date | Event | Type | Materials |
-|------|-------|------|-----------|
-| *dd.mm.yyyy* | *Event title* | Course | [Syllabus](*link*) |
+| *dd.mm.yyyy* | *Event title* | Seminar | [Slides](https://example.com) |
+| *dd.mm.yyyy* | *Event title* | Workshop | [Recording](https://example.com) |
+| *dd.mm.yyyy* | *Event title* | Course | [Syllabus](https://example.com) |

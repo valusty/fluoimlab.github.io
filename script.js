@@ -1,436 +1,1452 @@
 /* ==========================================================================
-   FIL — script.js
-   Sidebar, routing, language switching, theme toggle, Markdown rendering
+   FIL — Fluorescence Imaging Laboratory
+   script.js — content engine
+
+   Everything visible on the site comes from Markdown files:
+     site/settings_uk.md, site/settings_en.md  → brand, navigation, footer
+     <section>/content_uk.md, content_en.md    → page content
+     support/banner_en.md                      → home page banner
+
+   You normally do NOT need to edit this file to change the website.
+   See README.md for editing instructions.
    ========================================================================== */
 
 (function () {
   'use strict';
 
-  // ---------------------------------------------------------------------------
-  // Configuration
-  // ---------------------------------------------------------------------------
-  const SECTIONS = [
-    {
-      id: 'about',
-      icon: '🏛',
-      label: { uk: 'Про лабораторію', en: 'About' },
-    },
-    {
-      id: 'equipment',
-      icon: '🔬',
-      label: { uk: 'Обладнання', en: 'Equipment' },
-    },
-    {
-      id: 'services',
-      icon: '🧪',
-      label: { uk: 'Послуги', en: 'Services' },
-    },
-    {
-      id: 'team',
-      icon: '👥',
-      label: { uk: 'Колектив', en: 'Team' },
-    },
-    {
-      id: 'research',
-      icon: '📄',
-      label: { uk: 'Наукова робота', en: 'Research' },
-    },
-    {
-      id: 'events',
-      icon: '📅',
-      label: { uk: 'Заходи', en: 'Events' },
-    },
-  ];
+  // ===========================================================================
+  // 1. Constants
+  // ===========================================================================
 
-  // Hidden sections — accessible by URL hash but not shown in sidebar navigation
-  const HIDDEN_SECTIONS = [
-    { id: 'links' },
-  ];
+  var DEFAULT_LANG = 'uk';
+  var DEFAULT_THEME = 'dark';
+  var DEFAULT_SECTION = 'about'; // may be overridden by `home:` in settings
+  var STORAGE_LANG = 'fil-lang';
+  var STORAGE_THEME = 'fil-theme';
 
-  const ALL_SECTION_IDS = SECTIONS.map(s => s.id).concat(HIDDEN_SECTIONS.map(s => s.id));
-
-  const DEFAULT_SECTION = 'about';
-  const DEFAULT_LANG = 'uk';
-  const DEFAULT_THEME = 'dark';
-  const STORAGE_KEY_LANG = 'fil-lang';
-  const STORAGE_KEY_THEME = 'fil-theme';
-
-  // ---------------------------------------------------------------------------
-  // State
-  // ---------------------------------------------------------------------------
-  let currentLang = localStorage.getItem(STORAGE_KEY_LANG) || DEFAULT_LANG;
-  let currentTheme = localStorage.getItem(STORAGE_KEY_THEME) || DEFAULT_THEME;
-  let currentSection = null;
-
-  // ---------------------------------------------------------------------------
-  // DOM helpers
-  // ---------------------------------------------------------------------------
-  function $(sel, ctx) {
-    return (ctx || document).querySelector(sel);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Build sidebar HTML
-  // ---------------------------------------------------------------------------
-  function buildSidebar() {
-    const sidebar = document.createElement('aside');
-    sidebar.className = 'sidebar';
-    sidebar.id = 'sidebar';
-
-    // Header
-    const header = document.createElement('div');
-    header.className = 'sidebar-header';
-    header.innerHTML = `
-      <img src="assets/logo.png" alt="FIL Logo" class="sidebar-logo">
-      <div class="sidebar-title">
-        <span class="sidebar-title-name">FIL</span>
-        <span class="sidebar-title-sub">Fluorescence Imaging Laboratory</span>
-      </div>
-    `;
-    sidebar.appendChild(header);
-
-    // Nav
-    const nav = document.createElement('nav');
-    nav.className = 'sidebar-nav';
-    const ul = document.createElement('ul');
-
-    SECTIONS.forEach((sec) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = `#${sec.id}`;
-      a.dataset.section = sec.id;
-      a.innerHTML = `<span class="nav-icon">${sec.icon}</span><span class="nav-label">${sec.label[currentLang]}</span>`;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateTo(sec.id);
-        closeMobileMenu();
-      });
-      li.appendChild(a);
-      ul.appendChild(li);
-    });
-
-    nav.appendChild(ul);
-    sidebar.appendChild(nav);
-
-    // Footer with language toggle + theme toggle
-    const footer = document.createElement('div');
-    footer.className = 'sidebar-footer';
-    footer.innerHTML = `
-      <span class="sidebar-footer-label">${currentLang === 'uk' ? 'Мова' : 'Language'}</span>
-      <div class="toggle-group" id="lang-toggle">
-        <button class="toggle-btn ${currentLang === 'uk' ? 'active' : ''}" data-lang="uk">UA</button>
-        <button class="toggle-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">EN</button>
-      </div>
-      <span class="sidebar-footer-label" style="margin-top: 0.25rem">${currentLang === 'uk' ? 'Тема' : 'Theme'}</span>
-      <div class="toggle-group" id="theme-toggle">
-        <button class="toggle-btn ${currentTheme === 'light' ? 'active' : ''}" data-theme="light">☀️</button>
-        <button class="toggle-btn ${currentTheme === 'dark' ? 'active' : ''}" data-theme="dark">🌙</button>
-      </div>
-    `;
-    sidebar.appendChild(footer);
-
-    // Language button events
-    footer.querySelectorAll('#lang-toggle .toggle-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setLanguage(btn.dataset.lang);
-      });
-    });
-
-    // Theme button events
-    footer.querySelectorAll('#theme-toggle .toggle-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setTheme(btn.dataset.theme);
-      });
-    });
-
-    return sidebar;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Build topbar (mobile)
-  // ---------------------------------------------------------------------------
-  function buildTopbar() {
-    const topbar = document.createElement('header');
-    topbar.className = 'topbar';
-    topbar.id = 'topbar';
-    topbar.innerHTML = `
-      <span class="topbar-title">FIL</span>
-      <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
-    `;
-    return topbar;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Build overlay
-  // ---------------------------------------------------------------------------
-  function buildOverlay() {
-    const overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    overlay.id = 'sidebar-overlay';
-    overlay.addEventListener('click', closeMobileMenu);
-    return overlay;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Initialize DOM structure
-  // ---------------------------------------------------------------------------
-  function initDOM() {
-    // Apply saved theme immediately
-    document.documentElement.setAttribute('data-theme', currentTheme);
-
-    const body = document.body;
-
-    // Sidebar
-    const sidebar = buildSidebar();
-    body.prepend(sidebar);
-
-    // Overlay
-    body.appendChild(buildOverlay());
-
-    // Main wrapper
-    let main = $('.main');
-    if (!main) {
-      main = document.createElement('main');
-      main.className = 'main';
-      body.appendChild(main);
-    }
-
-    // Topbar (inside main, before content)
-    const topbar = buildTopbar();
-    main.prepend(topbar);
-
-    // Content container
-    let content = $('#content');
-    if (!content) {
-      content = document.createElement('div');
-      content.className = 'content';
-      content.id = 'content';
-      main.appendChild(content);
-    }
-
-    // Footer
-    const footer = document.createElement('footer');
-    footer.className = 'footer';
-    footer.id = 'footer';
-    footer.textContent = `© ${new Date().getFullYear()} FIL — Fluorescence Imaging Laboratory`;
-    main.appendChild(footer);
-
-    // Hamburger event
-    $('#hamburger').addEventListener('click', toggleMobileMenu);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Mobile menu
-  // ---------------------------------------------------------------------------
-  function toggleMobileMenu() {
-    const sidebar = $('#sidebar');
-    const overlay = $('#sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('visible');
-  }
-
-  function closeMobileMenu() {
-    const sidebar = $('#sidebar');
-    const overlay = $('#sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('visible');
-  }
-
-  // ---------------------------------------------------------------------------
-  // Navigation
-  // ---------------------------------------------------------------------------
-  function navigateTo(sectionId) {
-    if (!ALL_SECTION_IDS.includes(sectionId)) {
-      sectionId = DEFAULT_SECTION;
-    }
-
-    currentSection = sectionId;
-    window.location.hash = sectionId;
-
-    // Update active nav link (hidden sections won't match any sidebar link)
-    document.querySelectorAll('.sidebar-nav a').forEach((a) => {
-      a.classList.toggle('active', a.dataset.section === sectionId);
-    });
-
-    // Load content
-    loadContent(sectionId, currentLang);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Load & render Markdown content
-  // ---------------------------------------------------------------------------
-  async function loadContent(sectionId, lang) {
-    const content = $('#content');
-    content.innerHTML = '<div class="content-loading">Loading…</div>';
-
-    // Hidden "links" section — render inline HTML instead of fetching markdown
-    if (sectionId === 'links') {
-      content.innerHTML = buildLinksPage(lang);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const url = `${sectionId}/content_${lang}.md`;
-
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const md = await resp.text();
-      content.innerHTML = marked.parse(md);
-      updateImagePaths(content, sectionId);
-
-      // Inject Ukraine support banner at the top of the English "about" page
-      if (sectionId === 'about' && lang === 'en') {
-        injectUkraineBanner(content);
+  /* Interface micro-labels. These are the only words that do not live in a
+     Markdown file, because they are generated by the interface itself. */
+  var UI = {
+    uk: {
+      loading: 'Завантаження…',
+      notFound: 'Сторінку не знайдено',
+      notFoundHint: 'Не вдалося завантажити файл',
+      menu: 'Меню',
+      close: 'Закрити',
+      language: 'Мова',
+      theme: 'Тема',
+      download: 'Завантажити',
+      updated: 'Оновлено',
+      register: 'Реєстрація',
+      readMore: 'Детальніше',
+      doi: 'DOI',
+      toTop: 'Догори',
+      back: 'Повернутися до розділу',
+      readPost: 'Читати допис',
+      details: 'Детальніше',
+      missingFile: 'Файл не знайдено',
+      months: ['СІЧ', 'ЛЮТ', 'БЕР', 'КВІ', 'ТРА', 'ЧЕР', 'ЛИП', 'СЕР', 'ВЕР', 'ЖОВ', 'ЛИС', 'ГРУ'],
+      status: {
+        open: 'ВІДКРИТА РЕЄСТРАЦІЯ',
+        waitlist: 'ЛИСТ ОЧІКУВАННЯ',
+        full: 'МІСЦЬ НЕМАЄ',
+        closed: 'РЕЄСТРАЦІЮ ЗАКРИТО',
+        past: 'ЗАВЕРШЕНО',
+        online: 'ОНЛАЙН'
       }
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      console.error(`Failed to load ${url}:`, err);
-      content.innerHTML = `
-        <h1>⚠️ Content Not Found</h1>
-        <p>Could not load <code>${url}</code>.</p>
-        <p>Please ensure the file exists in the repository.</p>
-      `;
+    },
+    en: {
+      loading: 'Loading…',
+      notFound: 'Page not found',
+      notFoundHint: 'Could not load the file',
+      menu: 'Menu',
+      close: 'Close',
+      language: 'Language',
+      theme: 'Theme',
+      download: 'Download',
+      updated: 'Updated',
+      register: 'Register',
+      readMore: 'Read more',
+      doi: 'DOI',
+      toTop: 'Top',
+      back: 'Back to section',
+      readPost: 'Read the post',
+      details: 'Details',
+      missingFile: 'File not found',
+      months: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
+      status: {
+        open: 'OPEN',
+        waitlist: 'WAITLIST',
+        full: 'FULL',
+        closed: 'CLOSED',
+        past: 'PAST',
+        online: 'ONLINE'
+      }
     }
+  };
+
+  // ===========================================================================
+  // 2. State
+  // ===========================================================================
+
+  var state = {
+    lang: localStorage.getItem(STORAGE_LANG) || DEFAULT_LANG,
+    theme: localStorage.getItem(STORAGE_THEME) || DEFAULT_THEME,
+    section: null,
+    settings: {},          // parsed front matter of site/settings_<lang>.md
+    nav: [],               // header links
+    footerNav: [],         // footer links
+    partners: [],          // logos of the parent organisations
+    collaborators: [],     // logos of the partner organisations
+    home: DEFAULT_SECTION,
+    knownSections: []      // ids that appear in nav (used for "active" state)
+  };
+
+  function t(key) {
+    var pack = UI[state.lang] || UI[DEFAULT_LANG];
+    return pack[key];
   }
 
-  // ---------------------------------------------------------------------------
-  // Ukraine support banner (English about page only)
-  // ---------------------------------------------------------------------------
-  function injectUkraineBanner(container) {
-    const banner = document.createElement('a');
-    banner.className = 'ukraine-banner';
-    banner.href = '#links';
-    banner.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigateTo('links');
+  // ===========================================================================
+  // 3. Small helpers
+  // ===========================================================================
+
+  function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+
+  function esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* Block dangerous URLs coming from content files. */
+  function safeUrl(url) {
+    var u = String(url || '').trim();
+    if (!u) return '';
+    if (/^(javascript|vbscript|data):/i.test(u)) return '#';
+    return u;
+  }
+
+  /* Is this an address that points outside the website? */
+  function isExternal(url) {
+    return /^(https?:)?\/\//i.test(url) || /^(mailto|tel):/i.test(url);
+  }
+
+  /* Turn a path written inside a section file into a path from the site root.
+     `img/photo.jpg` inside `team/content_en.md` becomes `team/img/photo.jpg`. */
+  function resolvePath(url, baseDir) {
+    var u = String(url || '').trim();
+    if (!u) return '';
+    if (isExternal(u) || u.charAt(0) === '#' || u.charAt(0) === '/') return u;
+    if (!baseDir) return u;
+    if (u.indexOf(baseDir + '/') === 0) return u; // already resolved
+    return baseDir + '/' + u;
+  }
+
+  /* An on/off setting written in the settings file.
+       footer: on          → shown
+       footer: off         → hidden
+       footer:             → hidden (the value was emptied)
+       footer: # on        → hidden (the value was commented out)
+       (line absent)       → the default for that setting */
+  function settingEnabled(value, fallback) {
+    if (value === undefined) return fallback;
+    var v = String(value).trim().toLowerCase();
+    if (!v) return false;
+    return ['no', 'off', 'false', '0', 'none', 'hidden', 'ні', 'нi'].indexOf(v) < 0;
+  }
+
+  /* An aspect ratio written in a content file: `3/2`, `16 / 9` or `1.5`. */
+  function cssRatio(value) {
+    var v = String(value == null ? '' : value).trim();
+    if (!v) return '';
+    return /^\d*\.?\d+([ \t]*\/[ \t]*\d*\.?\d+)?$/.test(v) ? v : '';
+  }
+
+  /* A size written in the settings file: `2.5rem`, `40px`, or a bare number
+     which is treated as pixels. Anything unusable is ignored. */
+  function cssLength(value) {
+    var v = String(value == null ? '' : value).trim();
+    if (!v) return '';
+    if (/^\d*\.?\d+$/.test(v)) return v + 'px';
+    if (/^\d*\.?\d+(px|rem|em|%|vw|vh|pt)$/i.test(v)) return v;
+    return '';
+  }
+
+  function slugify(text) {
+    return String(text).toLowerCase().trim()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function md(text) {
+    if (!text) return '';
+    var store = [];
+    return restoreMath(marked.parse(extractMath(text, store), { gfm: true, breaks: false }), store);
+  }
+
+  function mdInline(text) {
+    if (!text) return '';
+    var store = [];
+    return restoreMath(marked.parseInline(extractMath(text, store), { gfm: true }), store);
+  }
+
+  // ===========================================================================
+  // 3a. Formulas — $…$ and $$…$$ are set aside before Markdown runs, so that
+  //     underscores and asterisks inside them are not read as formatting.
+  //     KaTeX itself is loaded only on pages that actually contain a formula.
+  // ===========================================================================
+
+  function extractMath(text, store) {
+    var code = [];
+
+    // Code stays untouched: a $ inside code is a dollar, not a formula.
+    var src = String(text)
+      .replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/g, function (m) {
+        code.push(m); return '\u0000CODE' + (code.length - 1) + '\u0000';
+      })
+      .replace(/`+[^`\n]*`+/g, function (m) {
+        code.push(m); return '\u0000CODE' + (code.length - 1) + '\u0000';
+      })
+      // \$ is an ordinary dollar sign, never the start of a formula
+      .replace(/\\\$/g, function () {
+        code.push('$'); return '\u0000CODE' + (code.length - 1) + '\u0000';
+      });
+
+    src = src.replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) {
+      store.push({ tex: tex.trim(), display: true });
+      return 'MATHTOKEN' + (store.length - 1) + 'ENDMATH';
     });
 
-    banner.innerHTML = `
-      <div class="ukraine-banner-top">
-        We are Ukrainian scientists, and till we work, our country suffers from the war.<br>
-        russia invaded Ukraine, killing tens of thousands of civilians and displacing millions more.<br>
-        Help us defend freedom, democracy and Ukraine's right to exist.
-      </div>
-      <div class="ukraine-banner-bottom">
-        Support Ukraine
-      </div>
-    `;
+    src = src.replace(/\$([^\s$][^$\n]*?)\$/g, function (m, tex) {
+      if (/\s$/.test(tex)) return m;          // "$5 and $10" is not a formula
+      store.push({ tex: tex.trim(), display: false });
+      return 'MATHTOKEN' + (store.length - 1) + 'ENDMATH';
+    });
 
-    container.insertBefore(banner, container.firstChild);
+    return src.replace(/\u0000CODE(\d+)\u0000/g, function (m, i) { return code[+i]; });
   }
 
-  // ---------------------------------------------------------------------------
-  // Build Links page (hidden section)
-  // ---------------------------------------------------------------------------
-  function buildLinksPage(lang) {
-    const title = lang === 'uk' ? 'Корисні посилання' : 'Useful Links';
-    const subtitle = lang === 'uk'
-      ? 'Ресурси для підтримки України та корисні посилання'
-      : 'Resources to support Ukraine and useful links';
-
-    return `
-      <h1>${title}</h1>
-      <p>${subtitle}</p>
-      <div class="links-grid">
-        <a class="link-card" href="https://u24.gov.ua/" target="_blank" rel="noopener noreferrer">
-          <span class="link-card-title">United24</span>
-          <span class="link-card-desc">${lang === 'uk' ? 'Офіційна платформа збору коштів для України' : 'Official fundraising platform of Ukraine'}</span>
-        </a>
-        <a class="link-card" href="https://savelife.in.ua/en/" target="_blank" rel="noopener noreferrer">
-          <span class="link-card-title">Come Back Alive</span>
-          <span class="link-card-desc">${lang === 'uk' ? 'Фонд підтримки Збройних Сил України' : 'Foundation supporting the Armed Forces of Ukraine'}</span>
-        </a>
-        <a class="link-card" href="https://prytulafoundation.org/en" target="_blank" rel="noopener noreferrer">
-          <span class="link-card-title">Serhiy Prytula Foundation</span>
-          <span class="link-card-desc">${lang === 'uk' ? 'Благодійний фонд Сергія Притули' : 'Serhiy Prytula Charity Foundation'}</span>
-        </a>
-        <a class="link-card" href="https://www.razomforukraine.org/" target="_blank" rel="noopener noreferrer">
-          <span class="link-card-title">Razom for Ukraine</span>
-          <span class="link-card-desc">${lang === 'uk' ? 'Міжнародна організація підтримки України' : 'International organization supporting Ukraine'}</span>
-        </a>
-      </div>
-    `;
+  function restoreMath(html, store) {
+    if (!store.length) return html;
+    store.forEach(function (item, i) {
+      var token = 'MATHTOKEN' + i + 'ENDMATH';
+      var payload = esc(item.tex);
+      if (item.display) {
+        // A formula on its own line becomes a block, not a run of text.
+        html = html.replace('<p>' + token + '</p>',
+          '<div class="math" data-display="1">' + payload + '</div>');
+      }
+      html = html.replace(token,
+        '<span class="math" data-display="' + (item.display ? '1' : '0') + '">' + payload + '</span>');
+    });
+    return html;
   }
 
-  // ---------------------------------------------------------------------------
-  // Fix relative image paths in rendered content
-  // ---------------------------------------------------------------------------
-  function updateImagePaths(container, sectionId) {
-    container.querySelectorAll('img').forEach((img) => {
-      const src = img.getAttribute('src');
-      if (src && !src.startsWith('http') && !src.startsWith('/') && !src.startsWith(sectionId + '/')) {
-        img.src = `${sectionId}/${src}`;
+  // ===========================================================================
+  // 4. Markdown parsing: front matter, blocks, items
+  // ===========================================================================
+
+  /* Front matter — the `key: value` list between the two `---` lines
+     at the very top of a Markdown file. */
+  function parseFrontMatter(text) {
+    var m = /^﻿?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/.exec(text);
+    if (!m) return { data: {}, body: text.replace(/^﻿/, '') };
+    var data = {};
+    m[1].split(/\r?\n/).forEach(function (line) {
+      if (!line.trim() || /^\s*#/.test(line)) return;
+      var i = line.indexOf(':');
+      if (i < 1) return;
+      var key = line.slice(0, i).trim().toLowerCase();
+      var val = line.slice(i + 1).trim();
+      // `logo: # assets/logo.png` — a hash right after the colon comments the
+      // value out, which is how a setting is switched off without deleting it.
+      if (/^#(\s|$)/.test(val)) val = '';
+      val = val.replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
+      data[key] = val;
+    });
+    return { data: data, body: text.slice(m[0].length) };
+  }
+
+  /* Split a page body into plain Markdown chunks and `:::name … :::` blocks. */
+  function splitBlocks(body) {
+    var lines = body.split(/\r?\n/);
+    var out = [];
+    var buffer = [];
+    var current = null;
+
+    function flushText() {
+      var text = buffer.join('\n');
+      if (text.trim()) out.push({ kind: 'markdown', text: text });
+      buffer = [];
+    }
+
+    var inComment = false;
+
+    lines.forEach(function (line) {
+      /* A block wrapped in <!-- … --> must stay switched off, so block markers
+         inside an HTML comment are treated as ordinary text. */
+      var wasInComment = inComment;
+      var opens = line.lastIndexOf('<!--');
+      var closes = line.lastIndexOf('-->');
+      if (inComment) {
+        if (closes > -1 && closes > opens) inComment = false;
+      } else if (opens > -1 && (closes === -1 || closes < opens)) {
+        inComment = true;
+      }
+      if (wasInComment || inComment) { buffer.push(line); return; }
+
+      var open = /^:::[ \t]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t]*(.*)$/.exec(line);
+      var close = /^:::[ \t]*$/.test(line);
+
+      if (!current && open) {
+        flushText();
+        current = {
+          kind: 'block',
+          name: open[1].toLowerCase(),
+          flags: open[2].trim().split(/\s+/).filter(Boolean).map(function (f) { return f.toLowerCase(); }),
+          lines: []
+        };
+        return;
+      }
+      if (current && close) { out.push(current); current = null; return; }
+      if (current) { current.lines.push(line); return; }
+      buffer.push(line);
+    });
+
+    if (current) out.push(current);   // block left unclosed — still render it
+    flushText();
+    return out;
+  }
+
+  /* Inside a block every `### Heading` starts a new item.
+     `key: value` lines directly under the heading become item properties,
+     everything after them is the item's Markdown body. */
+  function parseItems(lines) {
+    var items = [];
+    var current = null;
+
+    lines.forEach(function (line) {
+      var heading = /^###[ \t]+(.*)$/.exec(line);
+      if (heading) {
+        current = { title: heading[1].trim(), props: {}, body: [] };
+        items.push(current);
+        return;
+      }
+      if (!current) {
+        if (!line.trim()) return;
+        current = { title: '', props: {}, body: [] };
+        items.push(current);
+      }
+      var prop = /^([a-zA-Z][a-zA-Z0-9_]*)[ \t]*:[ \t]*(.*)$/.exec(line);
+      var bodyStillEmpty = current.body.every(function (l) { return !l.trim(); });
+      if (prop && bodyStillEmpty) {
+        current.props[prop[1].toLowerCase()] = prop[2].trim();
+        return;
+      }
+      current.body.push(line);
+    });
+
+    items.forEach(function (item) { item.body = item.body.join('\n').trim(); });
+    return items;
+  }
+
+  /* Read a Markdown list of links: `- [Label](target)`
+     Anything left after the closing bracket is ignored, so a stray character
+     does not silently drop a menu item. */
+  function parseLinkList(lines) {
+    var links = [];
+    lines.forEach(function (line) {
+      var m = /^[ \t]*[-*+][ \t]*\[([^\]]*)\][ \t]*\(([^)]*)\)/.exec(line);
+      if (m) links.push({ label: m[1].trim(), target: m[2].trim() });
+    });
+    return links;
+  }
+
+  // ===========================================================================
+  // 5. Link targets
+  //    `about`          → internal page
+  //    `legal/ethics`   → internal page, scrolled to the "ethics" heading
+  //    `https://…`      → external, opens in a new tab
+  // ===========================================================================
+
+  function linkAttrs(target) {
+    var url = safeUrl(target);
+    if (!url) return { href: '#', external: false };
+    if (isExternal(url)) return { href: url, external: true };
+    if (url.charAt(0) === '#') return { href: url, external: false };
+    return { href: '#' + url.replace(/^\/+/, ''), external: false };
+  }
+
+  // ===========================================================================
+  // 6. Component renderers
+  //    Each one turns the items of a `:::block` into HTML.
+  // ===========================================================================
+
+  var renderers = {};
+
+  /* :::metrics — headline numbers, e.g. "15+ / Imaging Modalities" */
+  renderers.metrics = function (items) {
+    var cells = items.map(function (item) {
+      return '<div class="metric">' +
+        '<span class="metric-value">' + mdInline(item.title) + '</span>' +
+        '<span class="metric-label">' + mdInline(item.body.replace(/\n+/g, ' ')) + '</span>' +
+        (item.props.note ? '<span class="metric-note">' + mdInline(item.props.note) + '</span>' : '') +
+        '</div>';
+    }).join('');
+    return '<div class="metrics">' + cells + '</div>';
+  };
+
+  /* :::cards — equipment, services, projects … */
+  /* :::cards        — grid of panels, several per row
+     :::cards wide   — one panel per row, image beside the text */
+  renderers.cards = function (items, flags, base) {
+    var wide = flags.indexOf('wide') >= 0;
+    var cards = items.map(function (item) {
+      var image = item.props.image ? resolvePath(safeUrl(item.props.image), base) : '';
+      var link = cardTarget(item.props, base);
+      return '<article class="card' + (link ? ' card-linked' : '') + (image ? '' : ' card-no-media') + '">' +
+        (image ? '<figure class="card-media"><img src="' + esc(image) + '" alt="' + esc(item.title) + '" loading="lazy"></figure>' : '') +
+        '<div class="card-body">' +
+          (item.props.tag ? '<span class="tag">' + esc(item.props.tag) + '</span>' : '') +
+          (item.title ? '<h3 class="card-title">' + mdInline(item.title) + '</h3>' : '') +
+          (item.props.meta ? '<p class="card-meta">' + mdInline(item.props.meta) + '</p>' : '') +
+          '<div class="card-text prose">' + md(item.body) + '</div>' +
+          (link ? '<a class="card-link" href="' + esc(link.href) + '"' + (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+            esc(item.props.link_label || (item.props.page ? t('details') : t('readMore'))) + ' <span aria-hidden="true">→</span></a>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+    return '<div class="cards' + (wide ? ' cards-wide' : '') + '">' + cards + '</div>';
+  };
+
+  /* Where a card leads.
+     `page: slug`  → a detail page stored as <section>/<slug>_<lang>.md
+     `link: …`     → any other address, internal or external */
+  function cardTarget(props, base) {
+    if (props.page) {
+      return { href: '#' + base + '/' + String(props.page).trim().replace(/^\/+/, ''), external: false };
+    }
+    if (!props.link) return null;
+    var link = linkAttrs(props.link);
+    if (!link.external && link.href.charAt(0) !== '#') link.href = resolvePath(link.href, base);
+    return link;
+  }
+
+  /* :::people — team directory */
+  renderers.people = function (items, flags, base) {
+    var rows = items.map(function (item) {
+      var p = item.props;
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      /* `size:` overrides the portrait size for this person only. */
+      var own = cssLength(p.size);
+      var links = [];
+      if (p.email) links.push('<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>');
+      if (p.orcid) links.push('<a href="' + esc(safeUrl(p.orcid)) + '" target="_blank" rel="noopener noreferrer">ORCID</a>');
+      if (p.scholar) links.push('<a href="' + esc(safeUrl(p.scholar)) + '" target="_blank" rel="noopener noreferrer">Google Scholar</a>');
+      if (p.website) links.push('<a href="' + esc(safeUrl(p.website)) + '" target="_blank" rel="noopener noreferrer">Website</a>');
+      if (p.github) links.push('<a href="' + esc(safeUrl(p.github)) + '" target="_blank" rel="noopener noreferrer">GitHub</a>');
+
+      return '<article class="person"' + (own ? ' style="--person-portrait-size:' + esc(own) + '"' : '') + '>' +
+        '<div class="person-portrait">' +
+          (image
+            ? '<img src="' + esc(image) + '" alt="' + esc(item.title) + '" loading="lazy">'
+            : '<span class="person-initials">' + esc(initials(item.title)) + '</span>') +
+        '</div>' +
+        '<div class="person-main">' +
+          '<div class="person-head">' +
+            '<h3 class="person-name">' + mdInline(item.title) + '</h3>' +
+            (p.role ? '<span class="tag">' + esc(p.role) + '</span>' : '') +
+          '</div>' +
+          (p.specialty ? '<p class="person-specialty">' + mdInline(p.specialty) + '</p>' : '') +
+          (item.body ? '<div class="person-bio prose">' + md(item.body) + '</div>' : '') +
+          (links.length ? '<div class="person-links">' + links.join('<span class="sep">/</span>') + '</div>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+    return '<div class="people">' + rows + '</div>';
+  };
+
+  function initials(name) {
+    return String(name || '?').replace(/[*_`]/g, '').trim().split(/\s+/).slice(0, 2)
+      .map(function (w) { return w.charAt(0).toUpperCase(); }).join('');
+  }
+
+  /* :::events — academic calendar */
+  renderers.events = function (items, flags, base) {
+    var rows = items.map(function (item) {
+      var p = item.props;
+      var date = formatDate(p.date);
+      var link = p.link ? linkAttrs(p.link) : null;
+      var meta = [];
+      if (p.time) meta.push(metaPair('◷', p.time));
+      if (p.location) meta.push(metaPair('◎', p.location));
+      if (p.format) meta.push(metaPair('▤', p.format));
+      if (p.organizer) meta.push(metaPair('◇', p.organizer));
+      if (p.audience) meta.push(metaPair('◈', p.audience));
+
+      return '<article class="event">' +
+        '<div class="event-date">' +
+          (date
+            ? '<span class="event-month">' + esc(date.month) + '</span><span class="event-day">' + esc(date.day) + '</span><span class="event-year">' + esc(date.year) + '</span>'
+            : '<span class="event-month">' + esc(p.date || '—') + '</span>') +
+        '</div>' +
+        '<div class="event-main">' +
+          '<div class="event-head">' +
+            '<h3 class="event-title">' + mdInline(item.title) + '</h3>' +
+            statusTag(p.status, p.status_label) +
+          '</div>' +
+          (meta.length ? '<div class="event-meta">' + meta.join('') + '</div>' : '') +
+          (item.body ? '<div class="event-body prose">' + md(item.body) + '</div>' : '') +
+          (link ? '<a class="btn btn-ghost" href="' + esc(link.external ? link.href : resolvePath(link.href, base)) + '"' +
+            (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+            esc(p.link_label || t('register')) + '</a>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+    return '<div class="events">' + rows + '</div>';
+  };
+
+  function metaPair(icon, value) {
+    return '<span class="event-meta-item"><span class="event-meta-icon" aria-hidden="true">' + icon + '</span>' + mdInline(value) + '</span>';
+  }
+
+  function statusTag(status, customLabel) {
+    if (!status && !customLabel) return '';
+    var key = String(status || '').toLowerCase();
+    var label = customLabel || (t('status')[key] || status.toUpperCase());
+    return '<span class="tag tag-status tag-' + esc(key || 'default') + '">[' + esc(label) + ']</span>';
+  }
+
+  function formatDate(raw) {
+    if (!raw) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw).trim());
+    if (!m) return null;
+    var monthIndex = parseInt(m[2], 10) - 1;
+    if (monthIndex < 0 || monthIndex > 11) return null;
+    return { month: t('months')[monthIndex], day: m[3].replace(/^0/, ''), year: m[1] };
+  }
+
+  /* :::publications — paper feed */
+  renderers.publications = function (items, flags, base, id) {
+    var rows = items.map(function (item) {
+      var p = item.props;
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      var links = [];
+      if (p.doi) {
+        var doiUrl = /^https?:/i.test(p.doi) ? p.doi : 'https://doi.org/' + p.doi.replace(/^doi:\s*/i, '');
+        links.push('<a href="' + esc(safeUrl(doiUrl)) + '" target="_blank" rel="noopener noreferrer">' + t('doi') + '</a>');
+      }
+      if (p.url) links.push('<a href="' + esc(safeUrl(p.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(p.url_label || 'Full text') + '</a>');
+      if (p.pdf) links.push('<a href="' + esc(resolvePath(safeUrl(p.pdf), base)) + '" target="_blank" rel="noopener noreferrer">PDF</a>');
+      if (p.data) links.push('<a href="' + esc(safeUrl(p.data)) + '" target="_blank" rel="noopener noreferrer">' + esc(p.data_label || 'Dataset') + '</a>');
+
+      return '<article class="publication">' +
+        (image ? '<figure class="publication-thumb"><img src="' + esc(image) + '" alt="" loading="lazy"></figure>' : '') +
+        '<div class="publication-main">' +
+          (p.authors ? '<p class="publication-authors">' + mdInline(p.authors) + '</p>' : '') +
+          '<h3 class="publication-title">' + mdInline(item.title) + '</h3>' +
+          '<p class="publication-source">' +
+            (p.journal ? '<em>' + mdInline(p.journal) + '</em>' : '') +
+            (p.volume ? ' ' + mdInline(p.volume) : '') +
+            (p.year ? ' <span class="publication-year">' + esc(p.year) + '</span>' : '') +
+          '</p>' +
+          (item.body ? '<div class="publication-body prose">' + md(item.body) + '</div>' : '') +
+          (links.length ? '<div class="publication-links">' + links.join('<span class="sep">/</span>') + '</div>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+    return '<div class="publications">' + rows + '</div>';
+  };
+
+  /* :::documents — downloadable PDFs stored in the repository */
+  renderers.documents = function (items, flags, base) {
+    var rows = items.map(function (item) {
+      var p = item.props;
+      var href = p.file ? resolvePath(safeUrl(p.file), base) : safeUrl(p.url || '');
+      var meta = [];
+      if (p.type) meta.push(esc(p.type));
+      if (p.size) meta.push(esc(p.size));
+      if (p.updated) meta.push(esc(t('updated') + ' ' + p.updated));
+      if (p.lang) meta.push(esc(p.lang));
+
+      return '<article class="document">' +
+        '<span class="document-icon" aria-hidden="true">PDF</span>' +
+        '<div class="document-main">' +
+          '<h3 class="document-title">' + mdInline(item.title) + '</h3>' +
+          (item.body ? '<div class="document-desc prose">' + md(item.body) + '</div>' : '') +
+          (meta.length ? '<p class="document-meta">' + meta.join('<span class="sep">/</span>') + '</p>' : '') +
+        '</div>' +
+        (href
+          ? '<a class="btn btn-ghost document-download" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer" download>' + esc(t('download')) + '</a>'
+          : '') +
+      '</article>';
+    }).join('');
+    return '<div class="documents">' + rows + '</div>';
+  };
+
+  /* :::links — link cards (charity funds, partners, resources) */
+  renderers.links = function (items, flags, base) {
+    var cards = items.map(function (item) {
+      var p = item.props;
+      var link = linkAttrs(p.url || p.link || '#');
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      return '<a class="link-card" href="' + esc(link.href) + '"' +
+        (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+        (image ? '<img class="link-card-image" src="' + esc(image) + '" alt="" loading="lazy">' : '') +
+        '<span class="link-card-title">' + mdInline(item.title) + '</span>' +
+        (item.body ? '<span class="link-card-desc">' + mdInline(item.body.replace(/\n+/g, ' ')) + '</span>' : '') +
+        (p.meta ? '<span class="link-card-meta">' + esc(p.meta) + '</span>' : '') +
+        '<span class="link-card-arrow" aria-hidden="true">→</span>' +
+      '</a>';
+    }).join('');
+    return '<div class="link-grid">' + cards + '</div>';
+  };
+
+  /* :::gallery — image grid */
+  /* :::gallery — image grid, two large square images per row.
+     `link:` makes an image clickable; `:::gallery compact` shows smaller cells. */
+  renderers.gallery = function (items, flags, base) {
+    var figures = items.map(function (item) {
+      var image = item.props.image ? resolvePath(safeUrl(item.props.image), base) : '';
+      if (!image) return '';
+      var link = item.props.link || item.props.url;
+      var target = link ? linkAttrs(link) : null;
+      if (target && !target.external && target.href.charAt(0) !== '#') target.href = resolvePath(target.href, base);
+
+      var picture = '<img src="' + esc(image) + '" alt="' + esc(item.title) + '" loading="lazy">';
+      var media = target
+        ? '<a class="gallery-media" href="' + esc(target.href) + '"' +
+            (target.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + picture +
+            '<span class="gallery-open" aria-hidden="true">↗</span></a>'
+        : '<span class="gallery-media">' + picture + '</span>';
+
+      var caption = (item.title || item.body)
+        ? '<figcaption>' +
+            (item.title ? '<span class="gallery-title">' + mdInline(item.title) + '</span>' : '') +
+            (item.body ? '<span class="gallery-caption">' + mdInline(item.body.replace(/\n+/g, ' ')) + '</span>' : '') +
+          '</figcaption>'
+        : '';
+
+      return '<figure class="gallery-item">' + media + caption + '</figure>';
+    }).join('');
+    return '<div class="gallery' + (flags.indexOf('compact') >= 0 ? ' gallery-compact' : '') + '">' + figures + '</div>';
+  };
+
+  /* :::static-gallery — a mosaic of images filling the whole width.
+     Each item may set how many columns it takes (`span:`) and its own
+     proportions (`ratio:`). The block works on a 12-column grid. */
+  renderers['static-gallery'] = function (items, flags, base) {
+    var columns = flags.filter(function (f) { return /^\d+$/.test(f); })[0];
+    var tight = flags.indexOf('tight') >= 0;
+
+    var tiles = items.map(function (item) {
+      var p = item.props;
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      if (!image) return '';
+
+      var style = [];
+      if (/^\d+$/.test(String(p.span || '').trim())) style.push('--span:' + String(p.span).trim());
+      var ratio = cssRatio(p.ratio);
+      if (ratio) style.push('--ratio:' + ratio);
+
+      var picture = '<img src="' + esc(image) + '" alt="' + esc(item.title) + '" loading="lazy">';
+      var link = p.link || p.url ? linkAttrs(p.link || p.url) : null;
+      if (link && !link.external && link.href.charAt(0) !== '#') link.href = resolvePath(link.href, base);
+
+      var inner = link
+        ? '<a class="static-gallery-link" href="' + esc(link.href) + '"' +
+            (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + picture + '</a>'
+        : picture;
+
+      /* The spacer carries the requested proportions; the picture is laid over
+         it, so tiles in one row end up flush even with different ratios. */
+      return '<figure class="static-gallery-item"' +
+        (style.length ? ' style="' + esc(style.join(';')) + '"' : '') + '>' +
+        '<span class="static-gallery-frame" aria-hidden="true"></span>' + inner +
+      '</figure>';
+    }).join('');
+
+    var blockStyle = columns ? ' style="--sg-columns:' + esc(columns) + '"' : '';
+    return '<div class="static-gallery' + (tight ? ' static-gallery-tight' : '') + '"' + blockStyle + '>' + tiles + '</div>';
+  };
+
+  /* :::posts — the blog index: a list of links to the individual posts */
+  renderers.posts = function (items, flags, base) {
+    var rows = items.map(function (item) {
+      var p = item.props;
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      var target = cardTarget(p, base);
+      var date = formatDate(p.date);
+
+      return '<article class="post' + (target ? ' post-linked' : '') + '">' +
+        (image ? '<figure class="post-thumb"><img src="' + esc(image) + '" alt="" loading="lazy"></figure>' : '') +
+        '<div class="post-main">' +
+          '<div class="post-meta">' +
+            (date ? '<span class="post-date">' + esc(date.day + ' ' + date.month + ' ' + date.year) + '</span>' : (p.date ? '<span class="post-date">' + esc(p.date) + '</span>' : '')) +
+            (p.tag ? '<span class="tag">' + esc(p.tag) + '</span>' : '') +
+            (p.author ? '<span class="post-author">' + mdInline(p.author) + '</span>' : '') +
+          '</div>' +
+          '<h3 class="post-title">' + mdInline(item.title) + '</h3>' +
+          (item.body ? '<div class="post-excerpt prose">' + md(item.body) + '</div>' : '') +
+          (target ? '<a class="post-link" href="' + esc(target.href) + '"' +
+            (target.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+            esc(p.link_label || t('readPost')) + ' <span aria-hidden="true">→</span></a>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+    return '<div class="posts">' + rows + '</div>';
+  };
+
+  /* :::note — callout box. Use `:::note warning` for a red accent. */
+  renderers.note = function (items, flags) {
+    var body = items.map(function (item) {
+      return (item.title ? '### ' + item.title + '\n\n' : '') + item.body;
+    }).join('\n\n');
+    var tone = flags.indexOf('warning') >= 0 ? ' note-warning' : (flags.indexOf('success') >= 0 ? ' note-success' : '');
+    return '<aside class="note' + tone + '"><div class="prose">' + md(body) + '</div></aside>';
+  };
+
+  /* :::steps — numbered procedure */
+  renderers.steps = function (items) {
+    var steps = items.map(function (item, i) {
+      return '<li class="step">' +
+        '<span class="step-number">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<div class="step-main">' +
+          '<h3 class="step-title">' + mdInline(item.title) + '</h3>' +
+          (item.body ? '<div class="prose">' + md(item.body) + '</div>' : '') +
+        '</div>' +
+      '</li>';
+    }).join('');
+    return '<ol class="steps">' + steps + '</ol>';
+  };
+
+  /* :::contact — contact detail rows */
+  renderers.contact = function (items) {
+    var rows = items.map(function (item) {
+      var value = item.body.trim();
+      var url = item.props.url || item.props.link;
+      var rendered = url
+        ? '<a href="' + esc(safeUrl(url)) + '"' + (isExternal(url) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + mdInline(value || url) + '</a>'
+        : mdInline(value);
+      return '<div class="contact-row">' +
+        '<span class="contact-label">' + mdInline(item.title) + '</span>' +
+        '<span class="contact-value">' + rendered + '</span>' +
+      '</div>';
+    }).join('');
+    return '<div class="contact-list">' + rows + '</div>';
+  };
+
+  // ===========================================================================
+  // 7. Page rendering
+  // ===========================================================================
+
+  function renderBlocks(blocks, base) {
+    var counter = 0;
+    return blocks.map(function (block) {
+      if (block.kind === 'markdown') {
+        var html = md(block.text);
+        // A chunk that holds only editor comments must not leave an empty gap.
+        if (!html.replace(/<!--[\s\S]*?-->/g, '').trim()) return '';
+        return '<div class="prose">' + html + '</div>';
+      }
+      var renderer = renderers[block.name];
+      var items = parseItems(block.lines);
+      counter += 1;
+      if (!renderer) {
+        // Unknown block name — render its content as ordinary Markdown
+        // instead of losing it.
+        return '<div class="prose">' + md(block.lines.join('\n')) + '</div>';
+      }
+      return renderer(items, block.flags, base, 'block-' + counter);
+    }).filter(Boolean).join('');
+  }
+
+  /* Sizes that a page may set in its header, applied as CSS variables.
+       portrait_size: 7rem   → the size of the team photos on that page
+       card_media_ratio: 3/2 → the shape of the images in wide cards */
+  var PAGE_STYLE = {
+    portrait_size: { prop: '--person-portrait-size', length: true },
+    card_media_ratio: { prop: '--card-media-ratio', length: false }
+  };
+
+  function applyPageStyle(el, data) {
+    Object.keys(PAGE_STYLE).forEach(function (key) {
+      var rule = PAGE_STYLE[key];
+      var raw = data[key];
+      if (raw === undefined) { el.style.removeProperty(rule.prop); return; }
+      var value = rule.length ? cssLength(raw) : String(raw).trim();
+      if (value) el.style.setProperty(rule.prop, value);
+      else el.style.removeProperty(rule.prop);
+    });
+  }
+
+  function renderPageHeader(data, base) {
+    if (!data.title && !data.subtitle && !data.hero_image) return '';
+    var hero = data.hero_image ? resolvePath(safeUrl(data.hero_image), base) : '';
+    var inner =
+      (data.eyebrow ? '<p class="page-eyebrow">' + esc(data.eyebrow) + '</p>' : '') +
+      (data.title ? '<h1 class="page-title">' + mdInline(data.title) + '</h1>' : '') +
+      (data.subtitle ? '<p class="page-subtitle">' + mdInline(data.subtitle) + '</p>' : '');
+
+    if (!hero) return '<header class="page-header">' + inner + '</header>';
+
+    return '<header class="hero" style="--hero-image:url(&quot;' + esc(hero) + '&quot;)">' +
+      '<div class="hero-image" role="img" aria-label="' + esc(data.hero_alt || data.title || '') + '"></div>' +
+      '<div class="hero-inner">' + inner + '</div>' +
+      (data.hero_caption ? '<p class="hero-caption">' + mdInline(data.hero_caption) + '</p>' : '') +
+    '</header>';
+  }
+
+  /* Post-processing of rendered Markdown: safe links, resolved image paths,
+     stand-alone images turned into figures, heading anchors. */
+  function enhance(container, base) {
+    $$('img', container).forEach(function (img) {
+      var src = img.getAttribute('src') || '';
+      img.setAttribute('src', resolvePath(safeUrl(src), base));
+      img.setAttribute('loading', 'lazy');
+    });
+
+    $$('a', container).forEach(function (a) {
+      // <a id="…"></a> markers carry no href — leave them as plain markers
+      if (!a.hasAttribute('href')) return;
+      var href = a.getAttribute('href') || '';
+      var url = safeUrl(href);
+      if (isExternal(url)) {
+        a.setAttribute('href', url);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      } else if (url.charAt(0) === '#' || url === '') {
+        a.setAttribute('href', url || '#');
+      } else if (/\.(pdf|zip|csv|xlsx?|docx?|pptx?|tiff?|svg|png|jpe?g|webp|mp4|txt|json)$/i.test(url)) {
+        a.setAttribute('href', resolvePath(url, base)); // file inside the section folder
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      } else if (!/\.[a-z0-9]+$/i.test(url) && url.indexOf('/') !== 0) {
+        a.setAttribute('href', '#' + url);            // another page of this site
+      } else {
+        a.setAttribute('href', resolvePath(url, base));
       }
     });
+
+    // A paragraph containing only an image becomes a figure with a caption.
+    $$('.prose p', container).forEach(function (p) {
+      if (p.childNodes.length !== 1) return;
+      var img = p.firstElementChild;
+      if (!img || img.tagName !== 'IMG') return;
+      var figure = document.createElement('figure');
+      figure.className = 'figure';
+      figure.appendChild(img.cloneNode(true));
+      if (img.getAttribute('alt')) {
+        var caption = document.createElement('figcaption');
+        caption.textContent = img.getAttribute('alt');
+        figure.appendChild(caption);
+      }
+      p.parentNode.replaceChild(figure, p);
+    });
+
+    // A ```mermaid code block becomes a diagram.
+    $$('pre code.language-mermaid', container).forEach(function (code) {
+      var holder = document.createElement('div');
+      holder.className = 'mermaid-diagram';
+      holder.dataset.source = code.textContent;
+      var pre = code.parentNode;
+      pre.parentNode.replaceChild(holder, pre);
+    });
+
+    // Wrap tables so that wide tables scroll instead of breaking the layout.
+    $$('table', container).forEach(function (table) {
+      if (table.parentNode.classList && table.parentNode.classList.contains('table-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+
+    // Anchors for deep links such as #legal/ethics
+    $$('h2, h3', container).forEach(function (h) {
+      if (!h.id && h.textContent.trim()) h.id = slugify(h.textContent);
+    });
   }
 
-  // ---------------------------------------------------------------------------
-  // Language switching
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // 7a. Formulas and diagrams: the libraries are fetched only when a page
+  //     actually contains one, and never more than once.
+  // ===========================================================================
+
+  var assetPromises = {};
+
+  function loadScriptOnce(url) {
+    if (assetPromises[url]) return assetPromises[url];
+    assetPromises[url] = new Promise(function (resolve, reject) {
+      var el = document.createElement('script');
+      el.src = url;
+      el.onload = resolve;
+      el.onerror = function () { reject(new Error('Could not load ' + url)); };
+      document.head.appendChild(el);
+    });
+    return assetPromises[url];
+  }
+
+  function loadStyleOnce(url) {
+    if (assetPromises[url]) return assetPromises[url];
+    assetPromises[url] = new Promise(function (resolve) {
+      var el = document.createElement('link');
+      el.rel = 'stylesheet';
+      el.href = url;
+      el.onload = resolve;
+      el.onerror = resolve;   // the formula still renders, only unstyled
+      document.head.appendChild(el);
+    });
+    return assetPromises[url];
+  }
+
+  /* Typeset every formula found in the freshly rendered page. */
+  function renderMath(container) {
+    var nodes = $$('.math', container).filter(function (el) { return !el.dataset.done; });
+    if (!nodes.length) return Promise.resolve();
+
+    loadStyleOnce('assets/katex/katex.min.css');
+    return loadScriptOnce('assets/katex/katex.min.js').then(function () {
+      nodes.forEach(function (el) {
+        var tex = el.textContent;
+        el.dataset.done = '1';
+        try {
+          window.katex.render(tex, el, {
+            displayMode: el.dataset.display === '1',
+            throwOnError: false,
+            output: 'html'
+          });
+        } catch (err) {
+          el.className = 'math math-error';
+          el.textContent = tex;
+        }
+      });
+    }).catch(function (err) {
+      console.error(err);
+      nodes.forEach(function (el) { el.classList.add('math-error'); });
+    });
+  }
+
+  /* Draw every ```mermaid block of the freshly rendered page. */
+  function renderDiagrams(container) {
+    var nodes = $$('.mermaid-diagram', container);
+    if (!nodes.length) return Promise.resolve();
+
+    /* Wait for the webfont: mermaid measures the label text to size each box,
+       and measuring with a fallback font leaves the labels clipped. */
+    var fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+
+    return Promise.all([loadScriptOnce('assets/mermaid.min.js'), fontsReady]).then(function () {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        fontFamily: 'Karla, sans-serif',
+        themeVariables: mermaidTheme(),
+        /* Keep the natural size: a diagram squeezed into the page width
+           becomes unreadable. Wide ones scroll inside their frame instead. */
+        /* Plain SVG labels: their boxes are measured from the text that is
+           actually drawn, so nothing gets clipped. */
+        htmlLabels: false,
+        flowchart: { useMaxWidth: false, htmlLabels: false, padding: 12 },
+        sequence: { useMaxWidth: false },
+        gantt: { useMaxWidth: false },
+        er: { useMaxWidth: false },
+        journey: { useMaxWidth: false },
+        class: { useMaxWidth: false },
+        state: { useMaxWidth: false }
+      });
+
+      return Promise.all(nodes.map(function (el, i) {
+        var source = el.dataset.source || '';
+        var id = 'mermaid-' + Date.now() + '-' + i;
+        return window.mermaid.render(id, source).then(function (result) {
+          el.innerHTML = result.svg;
+        }).catch(function (err) {
+          el.className = 'mermaid-diagram mermaid-error';
+          el.textContent = String(err && err.message ? err.message : err);
+        });
+      }));
+    }).catch(function (err) {
+      console.error(err);
+      nodes.forEach(function (el) { el.classList.add('mermaid-error'); });
+    });
+  }
+
+  /* Diagram colours follow the site palette and the current theme. */
+  function mermaidTheme() {
+    var css = getComputedStyle(document.documentElement);
+    function token(name, fallback) {
+      return (css.getPropertyValue(name) || fallback).trim() || fallback;
+    }
+    var surface = token('--surface-container-low', '#1c1b1b');
+    var line = token('--outline', '#879392');
+    var text = token('--on-surface', '#e5e2e1');
+    var primary = token('--primary-container', '#0c7f7f');
+    var onPrimary = token('--on-primary-container', '#ddfffe');
+
+    return {
+      background: 'transparent',
+      primaryColor: surface,
+      primaryTextColor: text,
+      primaryBorderColor: line,
+      secondaryColor: primary,
+      secondaryTextColor: onPrimary,
+      tertiaryColor: surface,
+      lineColor: line,
+      textColor: text,
+      mainBkg: surface,
+      nodeBorder: line,
+      clusterBkg: 'transparent',
+      clusterBorder: token('--outline-variant', '#3e4949'),
+      edgeLabelBackground: token('--surface', '#131313'),
+      fontSize: '16px'
+    };
+  }
+
+  /* Re-draw the diagrams after the theme is switched. */
+  function redrawDiagrams() {
+    if (!window.mermaid) return;
+    var nodes = $$('.mermaid-diagram');
+    if (!nodes.length) return;
+    nodes.forEach(function (el) { el.innerHTML = ''; });
+    renderDiagrams(document);
+  }
+
+  // ===========================================================================
+  // 8. Loading files
+  // ===========================================================================
+
+  function fetchText(url) {
+    return fetch(url, { cache: 'no-cache' }).then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ' — ' + url);
+      return resp.text();
+    });
+  }
+
+  // ===========================================================================
+  // 9. Site chrome (header, footer) built from site/settings_<lang>.md
+  // ===========================================================================
+
+  function loadSettings() {
+    return fetchText('site/settings_' + state.lang + '.md')
+      .then(function (text) {
+        var parsed = parseFrontMatter(text);
+        state.settings = parsed.data;
+        state.nav = [];
+        state.footerNav = [];
+        state.partners = [];
+        state.collaborators = [];
+        splitBlocks(parsed.body).forEach(function (block) {
+          if (block.kind !== 'block') return;
+          if (block.name === 'nav') state.nav = parseLinkList(block.lines);
+          if (block.name === 'footer') state.footerNav = parseLinkList(block.lines);
+          if (block.name === 'partners') state.partners = parseItems(block.lines);
+          if (block.name === 'collaborators') state.collaborators = parseItems(block.lines);
+        });
+        state.home = (state.settings.home || DEFAULT_SECTION).trim();
+        state.knownSections = state.nav.map(function (l) { return l.target.split('/')[0]; });
+      })
+      .catch(function (err) {
+        console.error('Could not load site settings:', err);
+        state.settings = { brand: 'FIL', brand_full: 'Fluorescence Imaging Laboratory' };
+        state.nav = [];
+        state.footerNav = [];
+        state.partners = [];
+        state.collaborators = [];
+      });
+  }
+
+  function renderChrome() {
+    var s = state.settings;
+
+    var navHtml = state.nav.map(function (link) {
+      var a = linkAttrs(link.target);
+      return '<a class="nav-link" href="' + esc(a.href) + '" data-section="' + esc(link.target.split('/')[0]) + '"' +
+        (a.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(link.label) + '</a>';
+    }).join('');
+
+    var ctaHtml = (s.cta_label && s.cta_link)
+      ? (function () {
+          var a = linkAttrs(s.cta_link);
+          return '<a class="btn btn-primary topbar-cta" href="' + esc(a.href) + '"' +
+            (a.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(s.cta_label) + '</a>';
+        })()
+      : '';
+
+    var homeAttrs = linkAttrs(state.home);
+
+    /* `logo:` in the settings file — a path from the project root, such as
+       `assets/logo.png`. Leave it empty to hide the mark.
+       `logo_size:` sets its height. */
+    var logo = (s.logo === undefined ? 'assets/logo.png' : s.logo).trim();
+    var logoSize = cssLength(s.logo_size);
+
+    $('#topbar').innerHTML =
+      '<div class="topbar-inner">' +
+        '<a class="brand" href="' + esc(homeAttrs.href) + '">' +
+          (logo
+            ? '<img class="brand-logo" src="' + esc(safeUrl(logo)) + '" alt=""' +
+              (logoSize ? ' style="--brand-logo-size:' + esc(logoSize) + '"' : '') + '>'
+            : '') +
+          '<span class="brand-text">' +
+            '<span class="brand-mark">' + esc(s.brand || 'FIL') + '</span>' +
+            '<span class="brand-sub">' + esc(s.brand_full || '') + '</span>' +
+          '</span>' +
+        '</a>' +
+        '<nav class="nav" id="nav" aria-label="' + esc(t('menu')) + '">' + navHtml + '</nav>' +
+        '<div class="topbar-actions">' +
+          '<div class="seg" id="lang-toggle" role="group" aria-label="' + esc(t('language')) + '">' +
+            '<button class="seg-btn' + (state.lang === 'uk' ? ' is-active' : '') + '" data-lang="uk">UA</button>' +
+            '<button class="seg-btn' + (state.lang === 'en' ? ' is-active' : '') + '" data-lang="en">EN</button>' +
+          '</div>' +
+          '<button class="icon-btn" id="theme-toggle" title="' + esc(t('theme')) + '" aria-label="' + esc(t('theme')) + '">' +
+            (state.theme === 'dark' ? '☾' : '☀') +
+          '</button>' +
+          ctaHtml +
+          '<button class="hamburger" id="hamburger" aria-label="' + esc(t('menu')) + '" aria-expanded="false">' +
+            '<span></span><span></span><span></span>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    /* `footer:` in the settings file switches the whole footer off. */
+    var footerEl = $('#footer');
+    footerEl.hidden = !settingEnabled(s.footer, true);
+
+    var footerLinks = state.footerNav.map(function (link) {
+      var a = linkAttrs(link.target);
+      return '<a href="' + esc(a.href) + '"' + (a.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(link.label) + '</a>';
+    }).join('');
+
+    footerEl.innerHTML = footerEl.hidden ? '' :
+      renderLogoBands() +
+      '<div class="footer-inner">' +
+        '<div class="footer-brand">' +
+          '<span class="footer-mark">' + esc(s.brand || 'FIL') + '</span>' +
+          (s.brand_full ? '<span class="footer-full">' + esc(s.brand_full) + '</span>' : '') +
+          (s.tagline ? '<p class="footer-tagline">' + mdInline(s.tagline) + '</p>' : '') +
+        '</div>' +
+        (footerLinks ? '<nav class="footer-nav" aria-label="Footer">' + footerLinks + '</nav>' : '') +
+        (s.address || s.email || s.phone
+          ? '<div class="footer-contact">' +
+              (s.address ? '<span>' + esc(s.address) + '</span>' : '') +
+              (s.email ? '<a href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a>' : '') +
+              (s.phone ? '<a href="tel:' + esc(s.phone.replace(/\s/g, '')) + '">' + esc(s.phone) + '</a>' : '') +
+            '</div>'
+          : '') +
+      '</div>' +
+      '<div class="footer-bottom">' +
+        '<span>' + esc((s.copyright || '© ' + new Date().getFullYear() + ' ' + (s.brand_full || 'FIL')).replace('{year}', new Date().getFullYear())) + '</span>' +
+      '</div>';
+
+    if (s.brand_full) document.title = (s.brand || 'FIL') + ' — ' + s.brand_full;
+    document.documentElement.setAttribute('lang', state.lang);
+
+    bindChromeEvents();
+  }
+
+  /* Two rows of logos in the footer:
+       :::partners       — the organisations the laboratory is part of
+       :::collaborators  — partner organisations
+     Both rows are edited in site/settings_<lang>.md and use the same design;
+     the second row sits on a slightly different background. */
+  function renderLogoBands() {
+    var bands =
+      renderLogoBand(state.partners, state.settings.partners_label, state.settings.partners_logo_size, 'partners') +
+      renderLogoBand(state.collaborators, state.settings.collaborators_label, state.settings.collaborators_logo_size, 'collaborators');
+    if (!bands) return '';
+    return '<div class="logo-bands" id="logo-bands">' + bands + '</div>';
+  }
+
+  function renderLogoBand(items, label, commonSize, kind) {
+    if (!items || !items.length) return '';
+
+    var logos = items.map(function (item) {
+      var p = item.props;
+      var src = resolvePath(safeUrl(p.image || p.image_light || ''), 'site');
+      if (!src) return '';
+
+      /* `size:` overrides the common height — useful when a round mark and a
+         wide wordmark have to look equally large. */
+      var own = cssLength(p.size);
+      var sizeAttr = own ? ' style="--partner-logo-size:' + esc(own) + '"' : '';
+      var picture = '<img class="partner-logo" src="' + esc(src) + '" alt="' + esc(item.title) + '" loading="lazy">';
+      var link = p.url || p.link ? linkAttrs(p.url || p.link) : null;
+
+      var plate = link
+        ? '<a class="partner-plate" href="' + esc(link.href) + '"' + sizeAttr +
+            (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') +
+            ' title="' + esc(item.title) + '">' + picture + '</a>'
+        : '<span class="partner-plate"' + sizeAttr + '>' + picture + '</span>';
+
+      return '<div class="partner">' + plate +
+        (item.body ? '<span class="partner-note">' + mdInline(item.body.replace(/\n+/g, ' ')) + '</span>' : '') +
+      '</div>';
+    }).join('');
+
+    if (!logos.trim()) return '';
+
+    var size = cssLength(commonSize);
+
+    return '<div class="logo-band logo-band-' + esc(kind) + '"' +
+        (size ? ' style="--partner-logo-size:' + esc(size) + '"' : '') + '>' +
+      '<div class="logo-band-inner">' +
+        (label ? '<span class="logo-band-label">' + esc(label) + '</span>' : '') +
+        '<div class="partner-list">' + logos + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function bindChromeEvents() {
+    $$('#lang-toggle .seg-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { setLanguage(btn.dataset.lang); });
+    });
+    $('#theme-toggle').addEventListener('click', function () {
+      setTheme(state.theme === 'dark' ? 'light' : 'dark');
+    });
+    $('#hamburger').addEventListener('click', toggleMenu);
+    $$('#nav .nav-link').forEach(function (a) {
+      a.addEventListener('click', closeMenu);
+    });
+  }
+
+  function toggleMenu() {
+    var open = document.body.classList.toggle('menu-open');
+    $('#hamburger').setAttribute('aria-expanded', String(open));
+  }
+
+  function closeMenu() {
+    document.body.classList.remove('menu-open');
+    var h = $('#hamburger');
+    if (h) h.setAttribute('aria-expanded', 'false');
+  }
+
+  // ===========================================================================
+  // 10. Support banner (shown on the home page when the file exists)
+  // ===========================================================================
+
+  function loadBanner(container) {
+    return fetchText('support/banner_' + state.lang + '.md')
+      .then(function (text) {
+        var parsed = parseFrontMatter(text);
+        var data = parsed.data;
+        var a = linkAttrs(data.link || 'support');
+        var banner = document.createElement('a');
+        banner.className = 'support-banner';
+        banner.href = a.href;
+        if (a.external) { banner.target = '_blank'; banner.rel = 'noopener noreferrer'; }
+        banner.innerHTML =
+          '<div class="support-banner-body">' +
+            (data.title ? '<span class="support-banner-title">' + esc(data.title) + '</span>' : '') +
+            '<div class="support-banner-text prose">' + md(parsed.body.trim()) + '</div>' +
+          '</div>' +
+          '<span class="support-banner-cta">' + esc(data.cta || 'Support Ukraine') + ' <span aria-hidden="true">→</span></span>';
+        container.insertBefore(banner, container.firstChild);
+      })
+      .catch(function () { /* no banner file for this language — that is fine */ });
+  }
+
+  // ===========================================================================
+  // 11. Routing
+  // ===========================================================================
+
+  /* Address forms:
+       #team                  → the page team/content_<lang>.md
+       #facility/confocal     → the detail page facility/confocal_<lang>.md
+       #legal:ethics          → the legal page, scrolled to the "ethics" marker
+       #facility/confocal:specs → a detail page, scrolled to a marker */
+  function parseHash() {
+    var raw = window.location.hash.replace(/^#\/?/, '').trim();
+    try { raw = decodeURIComponent(raw); } catch (e) { /* keep the raw value */ }
+    if (!raw) return { section: state.home, page: '', anchor: '' };
+
+    var anchor = '';
+    var colon = raw.indexOf(':');
+    if (colon > -1) { anchor = raw.slice(colon + 1); raw = raw.slice(0, colon); }
+
+    var parts = raw.split('/').filter(Boolean);
+    return {
+      section: parts[0] || state.home,
+      page: parts.slice(1).join('/'),
+      anchor: anchor
+    };
+  }
+
+  function route() {
+    var target = parseHash();
+    state.section = target.section;
+    markActiveNav(target.section);
+    loadSection(target.section, target.page, target.anchor);
+  }
+
+  function markActiveNav(sectionId) {
+    $$('#nav .nav-link').forEach(function (a) {
+      a.classList.toggle('is-active', a.dataset.section === sectionId);
+    });
+  }
+
+  function loadSection(sectionId, pageId, anchor) {
+    var content = $('#content');
+    content.innerHTML = '<div class="loading">' + esc(t('loading')) + '</div>';
+
+    var url = pageId
+      ? sectionId + '/' + pageId + '_' + state.lang + '.md'
+      : sectionId + '/content_' + state.lang + '.md';
+
+    return fetchText(url)
+      .then(function (text) {
+        var parsed = parseFrontMatter(text);
+        var base = sectionId;
+        content.className = 'content content-' + sectionId + (pageId ? ' content-detail' : '');
+        content.innerHTML =
+          (pageId ? renderBackLink(sectionId) : '') +
+          renderPageHeader(parsed.data, base) +
+          '<div class="page-body">' + renderBlocks(splitBlocks(parsed.body), base) + '</div>';
+        applyPageStyle(content, parsed.data);
+        enhance(content, base);
+        renderMath(content);
+        renderDiagrams(content);
+
+        /* The rows of organisation logos belong to the home page only. */
+        var bands = $('#logo-bands');
+        if (bands) bands.hidden = !(sectionId === state.home && !pageId);
+
+        var extra = (sectionId === state.home && !pageId) ? loadBanner($('.page-body', content)) : Promise.resolve();
+        return extra.then(function () {
+          if (anchor) {
+            var el = document.getElementById(anchor);
+            if (el) { scrollToElement(el); return; }
+          }
+          jumpTo(0);
+        });
+      })
+      .catch(function (err) {
+        console.error(err);
+        content.className = 'content';
+        var bands = $('#logo-bands');
+        if (bands) bands.hidden = true;
+        content.innerHTML =
+          '<header class="page-header">' +
+            '<p class="page-eyebrow">404</p>' +
+            '<h1 class="page-title">' + esc(t('notFound')) + '</h1>' +
+            '<p class="page-subtitle">' + esc(t('notFoundHint')) + ' <code>' + esc(url) + '</code></p>' +
+          '</header>';
+      });
+  }
+
+  /* Jump to a position without the animated scrolling that the stylesheet
+     switches on for in-page links. */
+  function jumpTo(top) {
+    var root = document.documentElement;
+    var previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    window.scrollTo(0, Math.max(0, Math.round(top)));
+    root.style.scrollBehavior = previous;
+  }
+
+  /* Scroll a marker into view, leaving room for the fixed top bar. */
+  function scrollToElement(el) {
+    var bar = $('#topbar');
+    var offset = (bar ? bar.offsetHeight : 0) + 24;
+    jumpTo(el.getBoundingClientRect().top + window.pageYOffset - offset);
+  }
+
+  /* "Back to section" link shown at the top of every detail page.
+     The label is taken from the main menu, so nothing has to be configured. */
+  function renderBackLink(sectionId) {
+    var entry = state.nav.filter(function (link) {
+      return link.target.split(/[/:]/)[0] === sectionId;
+    })[0];
+    var label = entry ? entry.label : t('back');
+    return '<div class="back-bar">' +
+      '<a class="back-link" href="#' + esc(sectionId) + '">' +
+        '<span aria-hidden="true">←</span> ' + esc(label) +
+      '</a>' +
+    '</div>';
+  }
+
+  // ===========================================================================
+  // 12. Language & theme
+  // ===========================================================================
+
   function setLanguage(lang) {
-    currentLang = lang;
-    localStorage.setItem(STORAGE_KEY_LANG, lang);
-
-    // Update toggle buttons
-    document.querySelectorAll('#lang-toggle .toggle-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.lang === lang);
+    if (!lang || lang === state.lang) return;
+    state.lang = lang;
+    localStorage.setItem(STORAGE_LANG, lang);
+    loadSettings().then(function () {
+      renderChrome();
+      markActiveNav(state.section);
+      route();
     });
-
-    // Update nav labels
-    document.querySelectorAll('.sidebar-nav a').forEach((a) => {
-      const sec = SECTIONS.find((s) => s.id === a.dataset.section);
-      if (sec) {
-        a.querySelector('.nav-label').textContent = sec.label[lang];
-      }
-    });
-
-    // Update footer labels
-    const labels = document.querySelectorAll('.sidebar-footer-label');
-    if (labels.length >= 2) {
-      labels[0].textContent = lang === 'uk' ? 'Мова' : 'Language';
-      labels[1].textContent = lang === 'uk' ? 'Тема' : 'Theme';
-    }
-
-    // Reload current section content
-    if (currentSection) {
-      loadContent(currentSection, lang);
-    }
   }
 
-  // ---------------------------------------------------------------------------
-  // Theme switching
-  // ---------------------------------------------------------------------------
   function setTheme(theme) {
-    currentTheme = theme;
-    localStorage.setItem(STORAGE_KEY_THEME, theme);
+    state.theme = theme;
+    localStorage.setItem(STORAGE_THEME, theme);
     document.documentElement.setAttribute('data-theme', theme);
+    var btn = $('#theme-toggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+    redrawDiagrams();
+  }
 
-    // Update toggle buttons
-    document.querySelectorAll('#theme-toggle .toggle-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.theme === theme);
+  // ===========================================================================
+  // 13. Global interactions
+  // ===========================================================================
+
+  function bindGlobalEvents() {
+    // "Skip to content" link — move focus without touching the URL hash,
+    // because the hash is used for page routing.
+    var skip = $('.skip-link');
+    if (skip) {
+      skip.addEventListener('click', function (e) {
+        e.preventDefault();
+        var content = $('#content');
+        content.setAttribute('tabindex', '-1');
+        content.focus();
+      });
+    }
+
+    // Tapping the dark overlay closes the mobile menu
+    var scrim = $('#menu-scrim');
+    if (scrim) scrim.addEventListener('click', closeMenu);
+
+    /* An image whose file is missing would otherwise be an invisible gap.
+       Show the path instead, so whoever edits the page sees what to add. */
+    document.addEventListener('error', function (e) {
+      var img = e.target;
+      if (!img || img.tagName !== 'IMG' || img.dataset.missingShown) return;
+      img.dataset.missingShown = '1';
+      img.classList.add('is-missing');
+      var note = document.createElement('span');
+      note.className = 'missing-file';
+      note.textContent = t('missingFile') + ': ' + (img.getAttribute('src') || '');
+      if (img.parentNode) img.parentNode.insertBefore(note, img.nextSibling);
+    }, true);
+
+    // Close the mobile menu with Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    window.addEventListener('hashchange', function () { closeMenu(); route(); });
+  }
+
+  // ===========================================================================
+  // 14. Start
+  // ===========================================================================
+
+  function init() {
+    setTheme(state.theme);
+    bindGlobalEvents();
+    loadSettings().then(function () {
+      renderChrome();
+      route();
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Hash-based routing
-  // ---------------------------------------------------------------------------
-  function handleHash() {
-    const hash = window.location.hash.replace('#', '') || DEFAULT_SECTION;
-    navigateTo(hash);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Init
-  // ---------------------------------------------------------------------------
-  function init() {
-    initDOM();
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-  }
-
-  // Run when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
