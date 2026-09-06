@@ -10,9 +10,9 @@
 #   hero_caption — caption under the image
 # Delete the hero_image line to remove the large image.
 # ---------------------------------------------------------------------------
-eyebrow: Fluorescence Imaging Laboratory
+eyebrow:
 title: Let's take a look together
-subtitle: FIL is a hub for modern fluorescence microscopy - volumetric imaging and quantitative image analysis for fundamental and applied research.
+subtitle: FIL serves as a center of expertise and technological development in advanced fluorescence microscopy, specializing in volumetric imaging and quantitative image analysis for both fundamental and applied research.
 hero_image: img/hero.png
 hero_alt: Fluorescence microscopy composite image
 hero_caption: Composite: Neurofilaments & NUCLEI in the rat sciatic nerve · confocal microscopy · Yu. Dobropolska (2020)
@@ -34,7 +34,7 @@ Lateral Resolution
 Research Directions
 ::: -->
 
-## Our Mission
+## Fluorescence Imaging Laboratory
 
 FIL is a joint unit of the Department of Biomedicine and Neurosciences of the Kyiv Academic University and Department of Biotechnology of the Kyiv Aviation Institute and specializes in the development and application of modern methods
 fluorescence microscopy for the study of biological systems. We combine
@@ -75,37 +75,78 @@ fluorophores.
 ::: -->
 
 <!-- A MOSAIC OF IMAGES across the full page width.
-     span:  how many of the 12 columns the image takes
-            (12 = full width, 6 = half, 4 = a third, 3 = a quarter)
-     ratio: the proportions, for example 3/2, 1/1, 16/9
-     Put the files into the about/img/ folder and remove the comment lines. -->
+     After the block name comes the size of the grid: 12x6 means 12 columns
+     and 6 rows. Cells are square, so a tile is shaped by two numbers:
+     span:  how many columns the image takes
+     rows:  how many rows the image takes
+     A tile 6 rows tall stands beside two tiles of 3 rows each.
+     Put your own files into the about/img/ folder instead of the placeholders. -->
 
-:::static-gallery
-### Optical table of the laboratory
-image: img/mosaic-1.svg
-span: 5
-ratio: 4/3
-
-### Aligning the system
-image: img/mosaic-2.svg
+:::static-gallery 6x12
+### 1
+image: img/gallery/1000006887 (1).jpg
 span: 3
-ratio: 3/4
+rows: 5
 
-### Live-cell acquisition
-image: img/mosaic-3.svg
+### 2
+image: img/gallery/all.png
+span: 3
+rows: 3
+
+### 3
+image: img/gallery/Image0024.bmp
+span: 3
+rows: 2
+
+
+
+
+### 4
+image: img/gallery/s_C001.png
+span: 2
+rows: 3
+
+### 5
+image: img/gallery/PXL_20251212_190304631.jpg
 span: 4
-ratio: 4/3
+rows: 3
 
-### General view of the room
-image: img/mosaic-4.svg
-span: 7
-ratio: 16/9
 
-### Acquisition indicator
-image: img/mosaic-5.svg
-span: 5
-ratio: 16/9
+
+### 5
+image: img/gallery/Composite_v2.png
+span: 4
+rows: 6
+
+### 6
+image: img/gallery/05.png
+span: 2
+rows: 2
+
+### 7
+image: img/gallery/Projections of stk_0001_10.png
+span: 2
+rows: 2
+
+### 8
+image: img/gallery/Composite.png
+span: 2
+rows: 2
+
+
+
+### 51
+image: img/gallery/Montage.png
+span: 2
+rows: 2
+
+### 55
+image: img/gallery/PXL_20250829_091241094.MACRO_FOCUS.jpg
+span: 4
+rows: 2
 :::
+
+
 
 ## Contact
 

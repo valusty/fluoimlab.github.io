@@ -29,7 +29,7 @@ footer: on
 copyright: © {year} FIL — Fluorescence Imaging Laboratory
 partners_label: The laboratory is part of
 partners_logo_size: 3rem
-collaborators_label: Partner organisations
+# collaborators_label: Partner organisations and colaborations
 collaborators_logo_size: 3rem
 ---
 
@@ -91,14 +91,15 @@ size: 4.5rem
      Fill in the names and remove the comment lines below to show the row. -->
 
 
-:::collaborators
+<!-- :::collaborators
 ### Partner organisation name
 url: https://example.org
-image: img/partner-1.png
-size: 3rem
+image: img/biph.jpeg
+size: 6rem
 
 ### Another partner
 url: https://example.org
-image: img/partner-2.png
-:::
+image: img/shiz.jpeg
+size: 6rem
+::: -->
 

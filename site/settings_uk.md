@@ -29,7 +29,7 @@ footer: on
 copyright: © {year} FIL — Лабораторія флуоресцентної візуалізації
 partners_label: Лабораторія є частиною
 partners_logo_size: 3rem
-collaborators_label: Організації-партнери
+# collaborators_label: Організації-партнери та співпраця
 collaborators_logo_size: 3rem
 ---
 
@@ -41,7 +41,7 @@ collaborators_logo_size: 3rem
 - [Головна](about)
 - [Наукова робота](research)
 - [Обладнання та послуги](facility)
-- [Колектив](team)
+- [Команда](team)
 - [Протоколи](protocols)
 <!-- - [Заходи](events)
 - [Блог](blog) -->
@@ -89,14 +89,16 @@ size: 4.5rem
      Заповніть назви й приберіть рядки коментаря нижче, щоб рядок з'явився. -->
 
 
-:::collaborators
+<!-- :::collaborators
 ### Назва організації-партнера
 url: https://example.org
-image: img/partner-1.png
-size: 3rem
+image: img/biph.jpeg
+size: 6rem
 
 ### Ще один партнер
 url: https://example.org
-image: img/partner-2.png
-:::
+image: img/shiz.jpeg
+size: 6rem
+::: -->
+
 

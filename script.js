@@ -45,6 +45,7 @@
       readPost: 'Читати допис',
       details: 'Детальніше',
       missingFile: 'Файл не знайдено',
+      source: 'Джерело',
       months: ['СІЧ', 'ЛЮТ', 'БЕР', 'КВІ', 'ТРА', 'ЧЕР', 'ЛИП', 'СЕР', 'ВЕР', 'ЖОВ', 'ЛИС', 'ГРУ'],
       status: {
         open: 'ВІДКРИТА РЕЄСТРАЦІЯ',
@@ -73,6 +74,7 @@
       readPost: 'Read the post',
       details: 'Details',
       missingFile: 'File not found',
+      source: 'Source',
       months: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
       status: {
         open: 'OPEN',
@@ -139,9 +141,9 @@
     var u = String(url || '').trim();
     if (!u) return '';
     if (isExternal(u) || u.charAt(0) === '#' || u.charAt(0) === '/') return u;
-    if (!baseDir) return u;
-    if (u.indexOf(baseDir + '/') === 0) return u; // already resolved
-    return baseDir + '/' + u;
+    // A space in a file name is legal but must be encoded in an address.
+    if (baseDir && u.indexOf(baseDir + '/') !== 0) u = baseDir + '/' + u;
+    return u.replace(/ /g, '%20');
   }
 
   /* An on/off setting written in the settings file.
@@ -634,11 +636,72 @@
     return '<div class="gallery' + (flags.indexOf('compact') >= 0 ? ' gallery-compact' : '') + '">' + figures + '</div>';
   };
 
+  /* :::figures — illustrations with a caption and a link to the source.
+     Unlike the galleries, an illustration is never cropped: the whole image
+     is shown. `:::figures 2` or `:::figures 3` puts them side by side. */
+  renderers.figures = function (items, flags, base) {
+    var columns = flags.filter(function (f) { return f === '2' || f === '3'; })[0] || '1';
+
+    var figures = items.map(function (item) {
+      var p = item.props;
+      var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
+      if (!image) return '';
+
+      var ratio = cssRatio(p.ratio);
+      var media = '<img src="' + esc(image) + '" alt="' + esc(p.alt || item.title) + '" loading="lazy">';
+
+      var link = p.link ? linkAttrs(p.link) : null;
+      if (link && !link.external && link.href.charAt(0) !== '#') link.href = resolvePath(link.href, base);
+
+      var mediaBox = link
+        ? '<a class="figure-media" href="' + esc(link.href) + '"' +
+            (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') +
+            (ratio ? ' style="--ratio:' + esc(ratio) + '"' : '') + '>' + media + '</a>'
+        : '<span class="figure-media"' + (ratio ? ' style="--ratio:' + esc(ratio) + '"' : '') + '>' + media + '</span>';
+
+      var source = '';
+      if (p.source) {
+        var src = linkAttrs(p.source);
+        source = '<a class="figure-source" href="' + esc(src.href) + '"' +
+          (src.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+          esc(t('source')) + ': ' + esc(p.source_label || stripScheme(p.source)) +
+          '</a>';
+      } else if (p.source_label) {
+        source = '<span class="figure-source">' + esc(t('source')) + ': ' + esc(p.source_label) + '</span>';
+      }
+
+      var caption = (item.title || item.body || source)
+        ? '<figcaption>' +
+            (item.title ? '<span class="figure-title">' + mdInline(item.title) + '</span>' : '') +
+            (item.body ? '<div class="figure-text prose">' + md(item.body) + '</div>' : '') +
+            source +
+          '</figcaption>'
+        : '';
+
+      return '<figure class="figure-item">' + mediaBox + caption + '</figure>';
+    }).join('');
+
+    return '<div class="figures figures-' + esc(columns) + '">' + figures + '</div>';
+  };
+
+  /* "https://zenodo.org/records/1" → "zenodo.org" */
+  function stripScheme(url) {
+    return String(url).replace(/^[a-z]+:\/\//i, '').replace(/\/.*$/, '');
+  }
+
   /* :::static-gallery — a mosaic of images filling the whole width.
      Each item may set how many columns it takes (`span:`) and its own
      proportions (`ratio:`). The block works on a 12-column grid. */
   renderers['static-gallery'] = function (items, flags, base) {
-    var columns = flags.filter(function (f) { return /^\d+$/.test(f); })[0];
+    /* `:::static-gallery 12x6` — a canvas of 12 columns and about 6 rows.
+       Cells are square, so a tile of `span: 4` and `rows: 3` is a 4:3 image. */
+    var grid = { cols: 12, rows: 0 };
+    flags.forEach(function (f) {
+      var m = /^(\d+)(?:[x×](\d+))?$/.exec(f);
+      if (!m) return;
+      grid.cols = parseInt(m[1], 10);
+      grid.rows = m[2] ? parseInt(m[2], 10) : 0;
+    });
     var tight = flags.indexOf('tight') >= 0;
 
     var tiles = items.map(function (item) {
@@ -646,10 +709,9 @@
       var image = p.image ? resolvePath(safeUrl(p.image), base) : '';
       if (!image) return '';
 
-      var style = [];
-      if (/^\d+$/.test(String(p.span || '').trim())) style.push('--span:' + String(p.span).trim());
-      var ratio = cssRatio(p.ratio);
-      if (ratio) style.push('--ratio:' + ratio);
+      var span = wholeNumber(p.span, 4);
+      var rows = wholeNumber(p.rows, 0);
+      if (!rows) rows = rowsFromRatio(p.ratio, span);
 
       var picture = '<img src="' + esc(image) + '" alt="' + esc(item.title) + '" loading="lazy">';
       var link = p.link || p.url ? linkAttrs(p.link || p.url) : null;
@@ -660,17 +722,35 @@
             (link.external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + picture + '</a>'
         : picture;
 
-      /* The spacer carries the requested proportions; the picture is laid over
-         it, so tiles in one row end up flush even with different ratios. */
-      return '<figure class="static-gallery-item"' +
-        (style.length ? ' style="' + esc(style.join(';')) + '"' : '') + '>' +
-        '<span class="static-gallery-frame" aria-hidden="true"></span>' + inner +
+      return '<figure class="static-gallery-item" style="--span:' + span + ';--rows:' + rows + '">' +
+        inner +
       '</figure>';
     }).join('');
 
-    var blockStyle = columns ? ' style="--sg-columns:' + esc(columns) + '"' : '';
-    return '<div class="static-gallery' + (tight ? ' static-gallery-tight' : '') + '"' + blockStyle + '>' + tiles + '</div>';
+    var style = '--sg-cols:' + grid.cols + (grid.rows ? ';--sg-rows:' + grid.rows : '');
+    return '<div class="static-gallery-wrap">' +
+      '<div class="static-gallery' + (tight ? ' static-gallery-tight' : '') + '" style="' + esc(style) + '">' +
+        tiles +
+      '</div>' +
+    '</div>';
   };
+
+  function wholeNumber(value, fallback) {
+    var v = parseInt(String(value == null ? '' : value).trim(), 10);
+    return (isFinite(v) && v > 0) ? v : fallback;
+  }
+
+  /* `ratio: 4/3` on a tile 4 columns wide means 3 rows tall. Kept so that
+     mosaics written before rows existed keep their proportions. */
+  function rowsFromRatio(ratio, span) {
+    var value = cssRatio(ratio);
+    if (!value) return Math.max(1, Math.round(span * 0.75));
+    var parts = value.split('/');
+    var w = parseFloat(parts[0]);
+    var h = parts.length > 1 ? parseFloat(parts[1]) : 1;
+    if (!w || !h) return Math.max(1, Math.round(span * 0.75));
+    return Math.max(1, Math.round(span * h / w));
+  }
 
   /* :::posts — the blog index: a list of links to the individual posts */
   renderers.posts = function (items, flags, base) {

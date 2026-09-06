@@ -2,7 +2,7 @@
 eyebrow: Протокол
 title: *Назва протоколу 2*
 subtitle: 2023 – теперішній час · *джерело фінансування*
-hero_image: img/paper-2.svg
+hero_image: img/paper-1.svg
 hero_caption: Приклад даних протоколу
 ---
 

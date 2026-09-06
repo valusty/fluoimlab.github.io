@@ -465,6 +465,7 @@ github: https://github.com/...
 Розмір, як і всюди, можна писати як `7rem`, `96px` або просто числом `96`.
 
 > Для гарної якості беріть квадратні фото зі стороною щонайменше 400 пікселів.
+> Фотографії показуються в кольорі, як у вихідному файлі.
 
 ### `:::events` — календар заходів
 
@@ -523,57 +524,168 @@ tag: Кальцієва візуалізація
 `doi` можна писати як номер (`10.1038/...`) або як повне посилання — обидва
 варіанти працюють.
 
-### `:::static-gallery` — мозаїка зображень
+### `:::figures` — ілюстрації з підписом і джерелом
 
-Колаж на всю ширину сторінки. На відміну від `:::gallery`, тут немає підписів —
-лише зображення, розкладені в сітку з 12 колонок.
+Блок для наукових ілюстрацій: схем, графіків, рисунків зі статей. На відміну
+від галерей, ілюстрація **ніколи не обрізається** — зображення показується
+цілком, а під ним стоїть підпис і посилання на джерело.
 
 ```
-:::static-gallery
-### Опис зображення для незрячих
-image: img/photo-1.jpg
-span: 5
-ratio: 4/3
+:::figures
+### Рис. 1 — Функція розсіювання точки
+image: img/psf.png
+source: https://doi.org/10.0000/example
+source_label: Nature Methods, 2024
 
-### Опис другого зображення
-image: img/photo-2.jpg
-span: 7
-ratio: 16/9
-link: https://example.org
+Підпис до ілюстрації. Можна писати кілька речень і використовувати
+**жирний текст**.
 :::
 ```
 
 | Властивість | Призначення |
 |-------------|-------------|
+| `image` | файл ілюстрації (обов'язково) |
+| `source` | адреса джерела; стає посиланням у підписі |
+| `source_label` | як назвати джерело; без нього показується домен |
+| `link` | окрема адреса, яка відкриється після кліку на саму ілюстрацію |
+| `ratio` | співвідношення рамки, наприклад `1/1` або `4/3` |
+| `alt` | опис для програм читання з екрана; без нього береться заголовок |
+
+Заголовок після `###` стає назвою ілюстрації, текст під властивостями —
+підписом.
+
+**Кілька ілюстрацій у ряд.** Додайте після назви блоку число `2` або `3`:
+
+```
+:::figures 2
+### Ліва ілюстрація
+image: img/left.png
+
+Підпис.
+
+### Права ілюстрація
+image: img/right.png
+
+Підпис.
+:::
+```
+
+| Запис | Вигляд |
+|-------|--------|
+| `:::figures` | одна ілюстрація на всю ширину |
+| `:::figures 2` | дві поряд |
+| `:::figures 3` | три поряд |
+
+На вузьких екранах вони самі стають одна під одною.
+
+> **Порада.** Якщо зображення мають різні пропорції, підписи під ними не
+> вирівняються. Додайте кожній ілюстрації однаковий рядок `ratio:` — рамки
+> стануть однакової висоти, а зображення все одно буде видно цілком.
+
+**Чим це відрізняється від галерей:**
+
+| Блок | Для чого | Обрізання |
+|------|----------|-----------|
+| `:::figures` | ілюстрації, схеми, рисунки з підписом і джерелом | ніколи |
+| `:::gallery` | набори даних: два квадрати в ряд із підписами | обрізає по центру |
+| `:::static-gallery` | мозаїка-колаж на сітці комірок, без підписів | обрізає по центру |
+
+Живий приклад — на сторінці **L-SPIM** у розділі «Обладнання та послуги».
+
+### `:::static-gallery` — мозаїка зображень
+
+Колаж на всю ширину сторінки. На відміну від `:::figures`, тут немає підписів —
+лише зображення, викладені на сітці.
+
+**Як це влаштовано.** Сторінка ділиться на сітку однакових **квадратних
+комірок**. Кожне зображення займає кілька комірок завширшки (`span`) і кілька
+заввишки (`rows`). Саме тому одна плитка може стояти поряд із двома іншими,
+поставленими одна на одну.
+
+```
+:::static-gallery 12x6
+### Оптичний стіл лабораторії
+image: img/photo-1.jpg
+span: 4
+rows: 6
+
+### Загальний вигляд приміщення
+image: img/photo-2.jpg
+span: 8
+rows: 3
+
+### Юстування системи
+image: img/photo-3.jpg
+span: 4
+rows: 3
+
+### Зйомка живих клітин
+image: img/photo-4.jpg
+span: 4
+rows: 3
+:::
+```
+
+Цей приклад дає таку картину: висока плитка ліворуч на всю висоту, широка
+праворуч угорі, а під нею — дві однакові:
+
+```
+┌────────┬───────────────────────┐
+│        │                       │
+│  4x6   │         8x3           │
+│        ├───────────┬───────────┤
+│        │    4x3    │    4x3    │
+└────────┴───────────┴───────────┘
+```
+
+**Розмір сітки** пишеться після назви блоку:
+
+| Запис | Що означає |
+|-------|------------|
+| `:::static-gallery` | 12 колонок (за замовчуванням) |
+| `:::static-gallery 12x6` | 12 колонок, задум на 6 рядків |
+| `:::static-gallery 6x4` | 6 колонок, задум на 4 рядки |
+
+Комірки завжди квадратні, тому друге число — це висота вашого колажу в
+комірках. Воно допомагає спланувати композицію на папері; якщо плиток
+виявиться більше, мозаїка просто виросте вниз.
+
+**Чим менше колонок, тим більші зображення.** Ширина комірки — це ширина
+сторінки, поділена на кількість колонок. У сітці на 12 колонок комірка вдвічі
+менша, ніж у сітці на 6, тому дрібні плитки виглядають марками. Якщо
+зображень небагато і вони мають бути великими — беріть 6 колонок; якщо
+потрібна дрібна, детальна композиція — 12 або більше.
+
+**Властивості плитки:**
+
+| Властивість | Призначення |
+|-------------|-------------|
 | `image` | файл зображення (обов'язково) |
-| `span` | скільки колонок із 12 займає зображення |
-| `ratio` | співвідношення сторін: `4/3`, `1/1`, `16/9`, `3/4` |
+| `span` | ширина в комірках |
+| `rows` | висота в комірках |
 | `link` | адреса, яка відкриється після кліку |
 
-**Скільки колонок брати:**
+Пропорції плитки — це просто `span` до `rows`: плитка `4x3` має вигляд 4:3,
+а `4x6` — вертикальна, удвічі вища за ширину. Зображення обрізається по центру,
+щоб заповнити плитку.
 
-| `span` | Ширина |
-|--------|--------|
-| 12 | уся ширина |
-| 6 | половина |
-| 4 | третина |
-| 3 | чверть |
+**Як скласти ряд.** Сума `span` усіх плиток одного ряду має дорівнювати
+кількості колонок. У сітці на 12 колонок це, наприклад, 4+8, 6+6 або 3+3+3+3.
 
-Щоб зображення стали в один ряд, сума їхніх `span` має дорівнювати 12
-(наприклад, 5 + 7 або 4 + 4 + 4). Якщо сума більша — зайві переходять на
-наступний ряд.
-
-**Висота рядка** визначається найвищою плиткою, а решта плиток у тому самому
-ряду розтягуються до неї, тож мозаїка завжди виходить рівною. Зображення при
-цьому обрізається по центру й ніколи не спотворюється.
+**Порада щодо дрібних пропорцій.** Розміри рахуються цілими комірками, тож у
+сітці на 12 колонок не всяке співвідношення можна задати точно. Якщо потрібна
+точніша форма — візьміть більше колонок, наприклад `:::static-gallery 24x12`.
 
 Додаткові варіанти:
 
-- `:::static-gallery tight` — без проміжків між зображеннями, суцільна мозаїка
-- `:::static-gallery 6` — сітка не з 12, а з 6 колонок
+- `:::static-gallery 12x6 tight` — без проміжків між зображеннями, суцільна мозаїка
 
-На вузьких екранах мозаїка сама перебудовується: спершу по два зображення в
-ряд, потім по одному.
+На вузьких екранах композиція зберігається повністю — мозаїка просто
+показується меншою. Якщо для телефонів важливо, щоб зображення лишалися
+великими, зробіть окрему мозаїку з меншою кількістю колонок, наприклад `6x4`.
+
+> Стара розмітка з рядком `ratio:` замість `rows:` теж працює: висота
+> перераховується з пропорції та `span` і округлюється до цілих комірок.
 
 ### `:::posts` — перелік дописів блогу
 
@@ -1363,6 +1475,8 @@ subtitle: Короткий опис сторінки.
 | Картка не відкриває сторінку | Файл `назва_uk.md` має лежати в теці розділу, а в рядку `page:` пишеться лише назва — без мови (`_uk`) і без `.md` |
 | Замість окремої сторінки — «Сторінку не знайдено» | Немає файлу для цієї мови: якщо є `confocal_uk.md`, має бути й `confocal_en.md` |
 | Посилання в підвалі не прокручує сторінку | Для мітки потрібна **двокрапка** (`legal:ethics`), а сама мітка `<a id="ethics"></a>` має бути у файлі сторінки |
+| Пробіли в назві файлу | Працюють, але краще їх уникати: назви на кшталт `IMG_4031.JPG` надійніші за `фото (1).jpg` |
+| Плитки мозаїки стали не туди | Сума `span` плиток одного ряду має дорівнювати кількості колонок сітки; зайва плитка переходить на наступний ряд |
 | Логотип установи не видно в підвалі | Перевірте, що файл лежить у теці `site/img/`, а шлях у рядку `image:` починається з `img/` |
 | Фото в колективі різної висоти або витягнуті | Такого бути не може: фото завжди квадратне. Перевірте, чи не задано комусь окремий рядок `size:` |
 | Картки різної висоти | Висоту задає довжина тексту, а не зображення. Скоротіть опис або перенесіть деталі на окрему сторінку картки |
@@ -1819,6 +1933,7 @@ places:
 As everywhere, the size can be written as `7rem`, `96px` or a bare number `96`.
 
 > For good quality use square photographs at least 400 pixels on a side.
+> Photographs are shown in colour, exactly as in the source file.
 
 ### `:::events` — the event calendar
 
@@ -1877,55 +1992,169 @@ A short summary (optional).
 `doi` may be written as a bare identifier (`10.1038/...`) or as a full link —
 both work.
 
-### `:::static-gallery` — a mosaic of images
+### `:::figures` — illustrations with a caption and a source
 
-A collage across the full page width. Unlike `:::gallery` it carries no
-captions — only images, laid out on a 12-column grid.
+A block for scientific illustrations: schemes, plots, figures from papers.
+Unlike the galleries, an illustration is **never cropped** — the whole image is
+shown, with a caption and a link to where it came from underneath.
 
 ```
-:::static-gallery
-### Image description for screen readers
-image: img/photo-1.jpg
-span: 5
-ratio: 4/3
+:::figures
+### Fig. 1 — Point spread function
+image: img/psf.png
+source: https://doi.org/10.0000/example
+source_label: Nature Methods, 2024
 
-### Description of the second image
-image: img/photo-2.jpg
-span: 7
-ratio: 16/9
-link: https://example.org
+The caption of the illustration. It may run over several sentences and use
+**bold text**.
 :::
 ```
 
 | Property | Purpose |
 |----------|---------|
+| `image` | the illustration file (required) |
+| `source` | address of the source; becomes a link in the caption |
+| `source_label` | how to name the source; without it the domain is shown |
+| `link` | a separate address opened when the illustration itself is clicked |
+| `ratio` | the shape of the frame, for example `1/1` or `4/3` |
+| `alt` | description for screen readers; the title is used when absent |
+
+The heading after `###` becomes the name of the illustration, and the text
+under the properties becomes its caption.
+
+**Several illustrations in a row.** Add the number `2` or `3` after the block
+name:
+
+```
+:::figures 2
+### Left illustration
+image: img/left.png
+
+Caption.
+
+### Right illustration
+image: img/right.png
+
+Caption.
+:::
+```
+
+| Entry | How it looks |
+|-------|--------------|
+| `:::figures` | one illustration across the full width |
+| `:::figures 2` | two side by side |
+| `:::figures 3` | three side by side |
+
+On narrow screens they stack automatically.
+
+> **Tip.** If the images have different proportions, their captions will not
+> line up. Give every illustration the same `ratio:` line — the frames then
+> share one height while each image is still shown in full.
+
+**How this differs from the galleries:**
+
+| Block | What for | Cropping |
+|-------|----------|----------|
+| `:::figures` | illustrations, schemes and figures with a caption and a source | never |
+| `:::gallery` | datasets: two squares per row with captions | crops from the centre |
+| `:::static-gallery` | a collage on a grid of cells, no captions | crops from the centre |
+
+A live example is on the **L-SPIM** page in the Equipment & Services section.
+
+### `:::static-gallery` — a mosaic of images
+
+A collage across the full page width. Unlike `:::figures` it carries no
+captions — only images, laid out on a grid.
+
+**How it works.** The page is divided into a grid of equal **square cells**.
+Each image takes a number of cells across (`span`) and a number of cells down
+(`rows`). That is what lets one tile stand beside two others stacked on top of
+each other.
+
+```
+:::static-gallery 12x6
+### Optical table of the laboratory
+image: img/photo-1.jpg
+span: 4
+rows: 6
+
+### General view of the room
+image: img/photo-2.jpg
+span: 8
+rows: 3
+
+### Aligning the system
+image: img/photo-3.jpg
+span: 4
+rows: 3
+
+### Live-cell acquisition
+image: img/photo-4.jpg
+span: 4
+rows: 3
+:::
+```
+
+This example produces a tall tile on the left across the whole height, a wide
+one at the top right and two equal tiles under it:
+
+```
+┌────────┬───────────────────────┐
+│        │                       │
+│  4x6   │         8x3           │
+│        ├───────────┬───────────┤
+│        │    4x3    │    4x3    │
+└────────┴───────────┴───────────┘
+```
+
+**The size of the grid** is written after the block name:
+
+| Entry | What it means |
+|-------|---------------|
+| `:::static-gallery` | 12 columns (the default) |
+| `:::static-gallery 12x6` | 12 columns, a layout planned for 6 rows |
+| `:::static-gallery 6x4` | 6 columns, a layout planned for 4 rows |
+
+Cells are always square, so the second number is the height of your collage in
+cells. It helps to sketch the composition on paper; if the tiles need more room,
+the mosaic simply grows downwards.
+
+**Fewer columns mean larger images.** The width of a cell is the page width
+divided by the number of columns, so on a 12-column grid a cell is half the size
+it is on a 6-column one, and small tiles end up looking like stamps. When there
+are few images and they should be large, take 6 columns; when a fine, detailed
+composition is needed, take 12 or more.
+
+**Tile properties:**
+
+| Property | Purpose |
+|----------|---------|
 | `image` | the image file (required) |
-| `span` | how many of the 12 columns the image takes |
-| `ratio` | the proportions: `4/3`, `1/1`, `16/9`, `3/4` |
+| `span` | width in cells |
+| `rows` | height in cells |
 | `link` | the address opened when the image is clicked |
 
-**How many columns to take:**
+The proportions of a tile are simply `span` to `rows`: a `4x3` tile looks 4:3,
+while `4x6` is upright, twice as tall as it is wide. The image is cropped from
+the centre to fill the tile.
 
-| `span` | Width |
-|--------|-------|
-| 12 | full width |
-| 6 | half |
-| 4 | a third |
-| 3 | a quarter |
+**Filling a row.** The `span` values of the tiles in one row should add up to
+the number of columns. On a 12-column grid that is 4+8, 6+6 or 3+3+3+3.
 
-For images to sit in one row, their `span` values must add up to 12 (for
-example 5 + 7, or 4 + 4 + 4). Anything above that moves to the next row.
-
-**The height of a row** comes from its tallest tile, and the other tiles in the
-same row stretch to match, so the mosaic always comes out flush. Images are
-cropped from the centre and never distorted.
+**A note on fine proportions.** Sizes are counted in whole cells, so on a
+12-column grid not every ratio can be hit exactly. When a more precise shape is
+needed, use more columns, for example `:::static-gallery 24x12`.
 
 Extra options:
 
-- `:::static-gallery tight` — no gaps between the images, a seamless mosaic
-- `:::static-gallery 6` — a grid of 6 columns instead of 12
+- `:::static-gallery 12x6 tight` — no gaps between the images, a seamless mosaic
 
-On narrow screens the mosaic rearranges itself: two images per row, then one.
+On narrow screens the composition is preserved in full — the mosaic is simply
+shown smaller. If the images must stay large on phones, build a separate mosaic
+with fewer columns, for example `6x4`.
+
+> The older markup with a `ratio:` line instead of `rows:` still works: the
+> height is derived from the ratio and the `span`, rounded to whole cells.
 
 ### `:::posts` — the blog index
 
@@ -2712,6 +2941,8 @@ merge into one.
 | A card does not open its page | The `name_en.md` file must be in the section folder, and the `page:` line holds only the name — without the language (`_en`) and without `.md` |
 | An individual page shows "Page not found" | The file for that language is missing: if `confocal_en.md` exists, `confocal_uk.md` must exist too |
 | A footer link does not scroll the page | A marker needs a **colon** (`legal:ethics`), and the `<a id="ethics"></a>` marker itself must be in the page file |
+| Spaces in a file name | They work, but are better avoided: a name like `IMG_4031.JPG` is safer than `photo (1).jpg` |
+| Mosaic tiles ended up in the wrong place | The `span` values of one row must add up to the number of columns; a tile that does not fit moves to the next row |
 | An organisation logo is not visible in the footer | Check that the file is in the `site/img/` folder and that the path in the `image:` line starts with `img/` |
 | Team photos have different heights, or look stretched | That cannot happen: a photo is always square. Check whether someone has their own `size:` line |
 | Cards have different heights | The height comes from the length of the text, not from the image. Shorten the description or move the detail to the card's own page |

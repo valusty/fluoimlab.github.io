@@ -46,29 +46,18 @@ page: project-3
      Images are shown two per row, as squares. -->
 
 :::gallery
-### Neuronal calcium sensors signalling
-image: img/dataset.svg
+### Neuronal calcium sensors translocation in the live neurons
+image: img/data/24_03_14_04.png
 link: https://zenodo.org/records/16950322
 
-*Hippocalcin translocation in response to LTD-inducing iontophoretic NMDA application.*
+Hippocalcin translocation in response to LTD-inducing iontophoretic NMDA application detected with proximity FRET.
 
-### Channel composite
-image: img/paper-1.svg
-link: https://zenodo.org/
+### Distilled PSF of the L-SPIM
+image: img/data/psf_v0.png
+link: https://doi.org/10.48788/DVUA/Q8I551
 
-*Short caption.*
+Experimental estimation of the PSD and resolution of the L-SPIM v0 setup.
 
-### Spectral unmixing
-image: img/paper-2.svg
-link: https://zenodo.org/
-
-*Short caption.*
-
-### Time series
-image: img/dataset.svg
-link: https://zenodo.org/
-
-*Short caption.*
 :::
 
 ## Publications
@@ -76,18 +65,15 @@ link: https://zenodo.org/
 <!-- Every `###` is a new publication. -->
 
 :::publications
-### *Article title*
-authors: *Surname A., Surname B., Surname C.*
-journal: Journal Name
-volume: *vol(issue), pages*
+### *Local Iontophoretic Application for Pharmacological Induction of Long-Term Synaptic Depression*
+authors: *B. Olifirov, O. Fedchenko (Hrubiian), A. Dovgan, D. Babets, V. Krotov, V. Cherkas and P. Belan*
+journal: Bio-protocol
+volume: *15(11): e5338*
 year: 2025
-doi: 10.0000/example
-image: img/paper-1.svg
-tag: Calcium Imaging
+doi: 10.21769/BioProtoc.5338
+image: img/pub/2025_bio-protocol.png
 
-*Short summary of the results (optional).*
-
-### *Article title*
+<!-- ### *Article title*
 authors: *Surname A., Surname B.*
 journal: Journal Name
 volume: *vol(issue), pages*
@@ -102,15 +88,15 @@ journal: Journal Name
 volume: *vol(issue), pages*
 year: 2024
 doi: 10.0000/example
-tag: Image Analysis
+tag: Image Analysis -->
 :::
 
-## Conferences
+<!-- ## Conferences
 
 | Year | Conference | Location | Presentation |
 |------|------------|----------|--------------|
 | *2025* | *Conference name* | *city, country* | *oral / poster* |
-| *2024* | *Conference name* | *city, country* | *oral / poster* |
+| *2024* | *Conference name* | *city, country* | *oral / poster* | -->
 
 ## Open-Source Software
 

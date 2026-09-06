@@ -809,6 +809,10 @@ body.menu-open .menu-scrim { opacity: 1; pointer-events: auto; }
    to fill (object-fit: cover). Change --card-media-ratio to reshape them. */
 .cards-wide .card-media {
   aspect-ratio: var(--card-media-ratio, 16 / 10);
+  /* The width is pinned to the column. Without it, a card whose text is
+     taller than the picture stretches the box vertically, and the aspect
+     ratio then widens it past the column. */
+  width: 100%;
   height: auto;
   border-bottom: 0;
   border-right: 1px solid var(--outline-variant);
@@ -864,11 +868,7 @@ body.menu-open .menu-scrim { opacity: 1; pointer-events: auto; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(100%) contrast(110%);
-  transition: filter var(--transition);
 }
-
-.person:hover .person-portrait img { filter: grayscale(0%) contrast(100%); }
 
 .person-initials {
   font-family: var(--font-display);
@@ -1280,34 +1280,40 @@ a.gallery-media:focus-visible .gallery-open { opacity: 1; }
 .figure img { width: 100%; }
 
 /* --------------------------------------------------------------------------
-   18a. Static gallery — a mosaic of images across the full width.
-   The grid has 12 columns; `span:` says how many an image takes and
-   `ratio:` gives its proportions.
+   18a. Static gallery — a mosaic laid out on a grid of square cells.
+   `span:` is how many columns a tile takes, `rows:` how many rows, so a tile
+   can stand beside two stacked ones. The cell size follows the page width.
    -------------------------------------------------------------------------- */
+.static-gallery-wrap { container-type: inline-size; }
+
 .static-gallery {
   display: grid;
-  grid-template-columns: repeat(var(--sg-columns, 12), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--sg-cols, 12), minmax(0, 1fr));
   gap: var(--sg-gap, 0.5rem);
   width: 100%;
+  /* Used only where container query units are unavailable */
+  grid-auto-rows: 4.5rem;
 }
 
-.static-gallery-tight { --sg-gap: 0; }
+/* Square cells: the row height equals the width of one column. */
+@supports (width: 1cqw) {
+  .static-gallery {
+    grid-auto-rows: calc(
+      (100cqw - (var(--sg-cols, 12) - 1) * var(--sg-gap, 0.5rem)) / var(--sg-cols, 12)
+    );
+  }
+}
+
+.static-gallery-tight { --sg-gap: 0px; }
 
 .static-gallery-item {
   position: relative;
   grid-column: span var(--span, 4);
+  grid-row: span var(--rows, 3);
   margin: 0;
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--surface-container-low);
-}
-
-/* Asks for the height that `ratio:` describes. A tile still stretches to the
-   height of its row, so the mosaic stays flush. */
-.static-gallery-frame {
-  display: block;
-  width: 100%;
-  aspect-ratio: var(--ratio, 3 / 2);
 }
 
 .static-gallery-tight .static-gallery-item { border-radius: 0; }
@@ -1343,167 +1349,79 @@ a.gallery-media:focus-visible .gallery-open { opacity: 1; }
 .static-gallery-link:focus-visible::after { border-color: var(--primary); }
 
 /* --------------------------------------------------------------------------
-   18b. Blog post list
+   18f. Illustrations — :::figures
+   An illustration is shown whole, never cropped, and carries a caption and
+   a link to where it came from. One, two or three side by side.
    -------------------------------------------------------------------------- */
-.posts {
+.figures {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+.figures-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.figures-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.figure-item {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--outline-variant);
-}
-
-.post {
-  position: relative;
-  display: grid;
-  grid-template-columns: 12rem 1fr;
-  gap: var(--gutter);
-  padding: 2rem 0;
-  border-bottom: 1px solid var(--outline-variant);
-  transition: background var(--transition);
-}
-
-.post-linked:hover { background: var(--surface-container-low); }
-
-.post-thumb {
   margin: 0;
-  aspect-ratio: 4 / 3;
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius);
   overflow: hidden;
+  background: var(--surface-container-lowest);
+}
+
+.figure-media {
+  display: block;
   background: var(--surface-container-low);
 }
 
-.post-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.figure-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
-.post-meta {
+/* With `ratio:` the box keeps that shape and the whole image is fitted
+   inside it — nothing is cut off. */
+.figure-media[style*="--ratio"] { aspect-ratio: var(--ratio); }
+.figure-media[style*="--ratio"] img { height: 100%; object-fit: contain; }
+
+a.figure-media { transition: opacity var(--transition); }
+a.figure-media:hover { opacity: 0.88; }
+
+.figure-item figcaption {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.6rem;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem var(--component-padding);
+  border-top: 1px solid var(--outline-variant);
 }
 
-.post-date {
+.figure-title {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.figure-text { max-width: none; }
+.figure-text p { font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--on-surface-variant); }
+.figure-text p:last-child { margin-bottom: 0; }
+
+.figure-source {
   font-family: var(--font-technical);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--primary);
-}
-
-.post-author {
-  font-family: var(--font-technical);
-  font-size: 0.8125rem;
-  color: var(--on-surface-variant);
-}
-
-.post-title {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.3;
-  margin: 0 0 0.5rem;
-}
-
-.post-excerpt { max-width: 70ch; }
-.post-excerpt p { font-size: 0.9375rem; margin-bottom: 0.5rem; }
-.post-excerpt p:last-child { margin-bottom: 0; }
-
-.post-link {
-  display: inline-block;
-  margin-top: 0.85rem;
-  font-family: var(--font-technical);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--primary);
-}
-
-.post-link:hover { text-decoration: none; color: var(--on-surface); }
-
-.post-linked .post-link::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.post-linked .post-excerpt a { position: relative; z-index: 2; }
-
-/* --------------------------------------------------------------------------
-   18c. Detail page: back to section
-   -------------------------------------------------------------------------- */
-.back-bar {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 2rem var(--margin-page) 0;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-technical);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-  transition: color var(--transition);
-}
-
-.back-link:hover { color: var(--primary); text-decoration: none; }
-
-.back-bar + .page-header { padding-top: 2rem; }
-
-/* --------------------------------------------------------------------------
-   18d. A referenced image file that does not exist
-   -------------------------------------------------------------------------- */
-img.is-missing { display: none; }
-
-.missing-file {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 4rem;
-  padding: 1rem;
-  border: 1px dashed var(--error);
-  border-radius: var(--radius);
-  background: var(--surface-container-low);
-  color: var(--error);
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  color: var(--outline);
   overflow-wrap: anywhere;
 }
 
-/* Inside a tile or a plate the note fills the whole box */
-.static-gallery-item .missing-file,
-.card-media .missing-file,
-.person-portrait .missing-file,
-.gallery-media .missing-file,
-.post-thumb .missing-file,
-.publication-thumb .missing-file {
-  position: absolute;
-  inset: 0;
-  border-radius: 0;
-  min-height: 0;
-}
-
-.card-media,
-.person-portrait,
-.gallery-media,
-.post-thumb,
-.publication-thumb { position: relative; }
-
-.partner-plate .missing-file {
-  min-height: var(--partner-logo-size, 2.75rem);
-  border: 0;
-  background: none;
-  padding: 0;
-}
+a.figure-source { color: var(--primary); }
+a.figure-source::after { content: " ↗"; }
+a.figure-source:hover { color: var(--on-surface); text-decoration: none; }
 
 /* --------------------------------------------------------------------------
    18e. Formulas (KaTeX) and diagrams (Mermaid)
@@ -1931,9 +1849,7 @@ a.partner-plate:focus-visible {
 
   .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
 
-  /* Two tiles per row on a narrow screen, whatever the authored spans */
-  .static-gallery { --sg-columns: 6; }
-  .static-gallery-item { grid-column: span 3; }
+  .figures-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .cards-wide .card { grid-template-columns: minmax(0, 1fr); }
 
@@ -1954,7 +1870,8 @@ a.partner-plate:focus-visible {
   }
 
   .gallery { grid-template-columns: 1fr; }
-  .static-gallery-item { grid-column: span 6; }
+  .figures-2,
+  .figures-3 { grid-template-columns: minmax(0, 1fr); }
   .post-thumb { max-width: 12rem; }
 
   .event-date { flex-direction: row; align-items: baseline; gap: 0.5rem; padding-top: 0; }

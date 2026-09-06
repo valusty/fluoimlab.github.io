@@ -2,7 +2,7 @@
 # portrait_size — the size of the photographs on this page (e.g. 7rem, 96px).
 # A photo is always square: the image is cropped from the centre, so any
 # source file works. Remove the line to get 5.5rem.
-portrait_size: 7rem
+portrait_size: 13rem
 eyebrow: Imaging Specialists
 title: Team
 subtitle: Scientists, engineers and students working at the FIL.
@@ -20,9 +20,9 @@ hero_caption: Laser in cage system · FIL (2026)
 
 :::people
 ### *Borys Olifirov*
-role: Head of laboratory, PI
+role: Head of Laboratory, PI
 specialty: *PhD · Hardware Development, Data Processing*
-image:
+image: img/olifirov.jpeg
 email: b.olifirov@kau.edu.ua
 orcid: https://orcid.org/0000-0001-9915-7769
 github: https://github.com/wisstock
@@ -32,7 +32,7 @@ github: https://github.com/wisstock
 ### *Valeriia Ustymenko*
 role: Co-PI
 specialty: *PhD Candidate · Sample Processing, Data Analysis*
-image:
+image: img/ustymenko.JPG
 email: v.ustymenko@kau.edu.ua
 orcid: https://orcid.org/0009-0000-2241-435X
 
@@ -44,16 +44,23 @@ orcid: https://orcid.org/0009-0000-2241-435X
 ### *Kostiantyn Koroid*
 role: Scientist
 specialty: *PhD · Hardware Development, Embended Systems Development*
-image:
+image: img/koroid.jpeg
 email: koroid.k.v@gmail.com
 orcid: https://orcid.org/0000-0002-0473-1703
 
 ### *Oleksandra Hrubiian*
 role: Scientist
-specialty: *MSc · Live-cell Imaging, Cell Cultures*
-image:
+specialty: *MSc · Live-cell Imaging, Cells Cultivation*
+image: img/hrubiian.jpeg
 email: oleksandra.fedchenko@biph.kiev.ua
 orcid: https://orcid.org/0000-0001-5886-2605
+
+### *Yevhenii Sheremet*
+role: Scientist
+specialty: *PhD · Hardware Development*
+image: img/sheremet.jpeg
+email: sheremet@biph.kiev.ua
+orcid: https://orcid.org/0000-0001-9951-2943
 
 :::
 
@@ -74,5 +81,5 @@ specialty: *study programme · project topic*
 
 :::note
 We are open to new team members. If you are a student or researcher interested
-in joining the laboratory, please get in touch.
+in joining the laboratory, please get in touch!
 :::

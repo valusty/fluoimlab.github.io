@@ -2,7 +2,7 @@
 eyebrow: Завершений протокол
 title: *Назва завершеного протоколу*
 subtitle: 2021 – 2023 · *джерело фінансування*
-hero_image: img/dataset.svg
+hero_image: img/paper-1.svg
 hero_caption: Приклад даних протоколу
 ---
 

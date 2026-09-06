@@ -6,9 +6,9 @@ hero_image: img/hero.jpeg
 hero_caption: Cultured hippocampal rat neurons · phase contrast & b/f film · B. Olifirov (2023)
 ---
 
-##
+## _TBA_
 
-:::cards wide
+<!-- :::cards wide
 ### *Protocol title 1*
 tag: Active
 meta: 2024 – present · *funding source*
@@ -32,4 +32,4 @@ image: img/dataset.svg
 page: protocol-3
 
 *Protocol description and outcomes.*
-:::
+::: -->
