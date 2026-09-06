@@ -51,6 +51,7 @@ they are stored in the repository.
 
 ```
 fluoimlab.github.io/
+├── .nojekyll             ← Порожній службовий файл. Не видаляти!
 ├── index.html            ← Каркас сайту. Редагувати не потрібно.
 ├── style.css             ← Оформлення: кольори, шрифти, відступи.
 ├── script.js             ← Логіка сайту. Редагувати не потрібно.
@@ -196,6 +197,12 @@ git push origin main
 2. У розділі **Source** оберіть гілку `main` і теку `/ (root)`.
 3. Натисніть **Save**.
 4. Через 1–2 хвилини сайт буде доступний за адресою репозиторію.
+
+> ⚠️ **У корені проєкту має лежати порожній файл `.nojekyll`.** Без нього
+> GitHub Pages запускає Jekyll, який перетворює всі файли `.md` на `.html` —
+> і сайт не може їх прочитати. Виглядає це так: сторінка відкривається, але
+> замість вмісту показує «Сторінку не знайдено», а меню зникає. Файл уже є в
+> репозиторії; не видаляйте його.
 
 ---
 
@@ -1483,6 +1490,7 @@ subtitle: Короткий опис сторінки.
 | Логотип установи виглядає порожньою плашкою | Найімовірніше, це біла («вивернута») версія логотипа — на світлій плашці її не видно. Візьміть звичайну версію для білого тла |
 | Логотипи установ різного «візуального» розміру | Додайте рядок `size:` до меншого з них — див. [розділ 8](#8-меню-підвал-і-загальні-налаштування) |
 | Налаштування не діє, хоча рядок є | Перевірте, чи немає `#` одразу після двокрапки — це вимикає значення |
+| Після завантаження на GitHub усі сторінки кажуть «Сторінку не знайдено» | У корені немає файлу `.nojekyll` — див. [розділ 3](#3-як-опублікувати-зміни) |
 | Зник увесь підвал | У налаштуваннях стоїть `footer: off` або значення закоментоване |
 | Зник один пункт меню | Перевірте рядок: він має мати вигляд `- [Назва](тека)`, без зайвих символів |
 
@@ -1520,6 +1528,7 @@ subtitle: Короткий опис сторінки.
 
 ```
 fluoimlab.github.io/
+├── .nojekyll             ← Empty service file. Do not delete!
 ├── index.html            ← Site shell. No need to edit.
 ├── style.css             ← Appearance: colours, fonts, spacing.
 ├── script.js             ← Site logic. No need to edit.
@@ -1664,6 +1673,12 @@ git push origin main
 2. Under **Source** select the `main` branch and the `/ (root)` folder.
 3. Click **Save**.
 4. After 1–2 minutes the site is available at the repository address.
+
+> ⚠️ **An empty file named `.nojekyll` must sit in the project root.** Without
+> it GitHub Pages runs Jekyll, which turns every `.md` file into `.html`, and
+> the site can no longer read them. The symptom is a page that loads but shows
+> "Page not found" instead of its content, with the menu missing. The file is
+> already in the repository; do not delete it.
 
 ---
 
@@ -2949,6 +2964,7 @@ merge into one.
 | An organisation logo shows as an empty plate | It is most likely the reversed (white) version of the logo, which is invisible on a light plate. Use the normal version for white backgrounds |
 | The organisation logos look visually unequal in size | Add a `size:` line to the smaller one — see [section 8](#8-menu-footer-and-global-settings) |
 | A setting has no effect although the line is there | Check for a `#` right after the colon — it switches the value off |
+| After uploading to GitHub every page says "Page not found" | The `.nojekyll` file is missing from the root — see [section 3](#3-publishing-changes) |
 | The whole footer disappeared | The settings hold `footer: off`, or the value is commented out |
 | One menu item disappeared | Check the line: it must read `- [Label](folder)`, with no stray characters |
 
