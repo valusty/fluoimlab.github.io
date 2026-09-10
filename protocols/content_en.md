@@ -6,18 +6,16 @@ hero_image: img/hero.jpeg
 hero_caption: Cultured hippocampal rat neurons · phase contrast & b/f film · B. Olifirov (2023)
 ---
 
-## _TBA_
+:::cards wide
+### *Cultured Cells Fixation*
+tag: Sample Processing
+meta: 2024 – present · *Oleksandra Hrubiian*
+image: img/Composite_v2.png
+page: cells-fix
 
-<!-- :::cards wide
-### *Protocol title 1*
-tag: Active
-meta: 2024 – present · *funding source*
-image: img/paper-1.svg
-page: protocol-1
+*Fixation and permeabilisation of the adherent cultured cells for fluorescence microscopy or next immunofluorescence staining.*
 
-*Protocol description: purpose, scope, expected outcome.*
-
-### *Protocol title 2*
+<!-- ### *Protocol title 2*
 tag: Active
 meta: 2023 – present · *funding source*
 image: img/paper-2.svg
@@ -31,5 +29,5 @@ meta: 2021 – 2023 · *funding source*
 image: img/dataset.svg
 page: protocol-3
 
-*Protocol description and outcomes.*
-::: -->
+*Protocol description and outcomes.* -->
+:::

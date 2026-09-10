@@ -15,7 +15,7 @@ title: Let's take a look together
 subtitle: FIL serves as a center of expertise and technological development in advanced fluorescence microscopy, specializing in volumetric imaging and quantitative image analysis for both fundamental and applied research.
 hero_image: img/hero.png
 hero_alt: Fluorescence microscopy composite image
-hero_caption: Composite: Neurofilaments & NUCLEI in the rat sciatic nerve · confocal microscopy · Yu. Dobropolska (2020)
+hero_caption: Neurofilaments & NUCLEI in the rat sciatic nerve · confocal microscopy · Yu. Dobropolska (2020)
 ---
 
 <!-- HEADLINE NUMBERS. Every `###` is a new number, the line below is its label. -->
@@ -94,61 +94,61 @@ span: 3
 rows: 3
 
 ### 3
-image: img/gallery/Image0024.bmp
+image: img/gallery/05.png
 span: 3
 rows: 2
 
+
+
+### 33
+
+image: img/gallery/IMG_20260907_15271.jpg
+span: 6
+rows: 2
 
 
 
 ### 4
 image: img/gallery/s_C001.png
 span: 2
-rows: 3
+rows: 5
 
 ### 5
 image: img/gallery/PXL_20251212_190304631.jpg
 span: 4
 rows: 3
 
-
-
 ### 5
 image: img/gallery/Composite_v2.png
 span: 4
 rows: 6
-
-### 6
-image: img/gallery/05.png
-span: 2
-rows: 2
 
 ### 7
 image: img/gallery/Projections of stk_0001_10.png
 span: 2
 rows: 2
 
-### 8
-image: img/gallery/Composite.png
+### 6
+image: img/gallery/psf_v0.png
 span: 2
 rows: 2
 
 
-
-### 51
-image: img/gallery/Montage.png
-span: 2
-rows: 2
 
 ### 55
 image: img/gallery/PXL_20250829_091241094.MACRO_FOCUS.jpg
 span: 4
 rows: 2
+
+### 51
+image: img/gallery/Montage.png
+span: 2
+rows: 2
 :::
 
 
 
-## Contact
+## Contacts
 
 :::contact
 

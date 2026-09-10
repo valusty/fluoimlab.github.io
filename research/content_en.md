@@ -3,7 +3,7 @@ eyebrow: Scientific Output
 title: Research
 subtitle: Current laboratory projects, publications, open-source software and conference activity.
 hero_image: img/hero.png
-hero_caption: Composite: myelin basic protein, cytoplasmic glial cell protein S100 & nuclei in the rat sciatic nerve · confocal microscopy · V. Ustymenko (2024)
+hero_caption: myelin basic protein, cytoplasmic glial cell protein S100 & nuclei in the rat sciatic nerve · confocal microscopy · V. Ustymenko (2024)
 ---
 
 <!-- The `page:` line opens a separate project page.

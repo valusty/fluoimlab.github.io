@@ -31,7 +31,7 @@ github: https://github.com/wisstock
 
 ### *Valeriia Ustymenko*
 role: Co-PI
-specialty: *PhD Candidate · Sample Processing, Data Analysis*
+specialty: *PhD Candidate · Sample Processing, Immunofluorescence Imaging & Data Analysis*
 image: img/ustymenko.JPG
 email: v.ustymenko@kau.edu.ua
 orcid: https://orcid.org/0009-0000-2241-435X
@@ -50,7 +50,7 @@ orcid: https://orcid.org/0000-0002-0473-1703
 
 ### *Oleksandra Hrubiian*
 role: Scientist
-specialty: *MSc · Live-cell Imaging, Cells Cultivation*
+specialty: *MSc · Cells Culturing & Live-Cell Imaging, Data Analysis*
 image: img/hrubiian.jpeg
 email: oleksandra.fedchenko@biph.kiev.ua
 orcid: https://orcid.org/0000-0001-5886-2605
@@ -61,6 +61,13 @@ specialty: *PhD · Hardware Development*
 image: img/sheremet.jpeg
 email: sheremet@biph.kiev.ua
 orcid: https://orcid.org/0000-0001-9951-2943
+
+### *Dana Biruk*
+role: Scientist
+specialty: *MSc · Live-Cell Imaging, Data Analysis*
+image: img/biruk4.jpeg
+email: danabiruk17@gmail.com
+orcid: https://orcid.org/0009-0001-9812-1040
 
 :::
 

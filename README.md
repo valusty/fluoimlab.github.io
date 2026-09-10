@@ -153,19 +153,24 @@ npx -y serve .
 Текстові файли `.md` сайт завжди завантажує наново, тому зміни в контенті
 з'являються одразу після оновлення сторінки.
 
-А от `style.css` і `script.js` браузер запам'ятовує. Якщо ви (або хтось для
-вас) змінили один із цих двох файлів, а сайт поводиться по-старому — треба
-підказати браузерам, що файл новий. Для цього у файлі `index.html` є номер
-версії:
+А от `style.css`, `script.js` і логотип `assets/logo.png` браузер
+запам'ятовує. Якщо ви (або хтось для вас) змінили один із цих файлів, а сайт
+поводиться по-старому — треба підказати браузерам, що файл новий. Для цього у
+файлі `index.html` є номер версії:
 
 ```html
-<link rel="stylesheet" href="style.css?v=3">
-<script src="script.js?v=3"></script>
+<link rel="icon" type="image/png" href="assets/logo.png?v=16">
+<link rel="stylesheet" href="style.css?v=16">
+<script src="script.js?v=16"></script>
 ```
 
-**Збільште число на одиницю** в обох рядках (`?v=3`) — і всі браузери
-завантажать нові файли. Робити це потрібно **лише** після зміни `style.css`
-або `script.js`; для редагування контенту — ні.
+**Збільште число на одиницю** в усіх трьох рядках (`?v=17`) — і всі браузери
+завантажать нові файли. Робити це потрібно **лише** після зміни `style.css`,
+`script.js` або логотипа; для редагування контенту — ні.
+
+> Іконку вкладки браузер зберігає в окремому кеші, який не очищається навіть
+> оновленням без кешу. Тому після заміни логотипа число треба збільшити
+> обов'язково — інакше у вкладці ще довго висітиме старий значок.
 
 Для швидкої перевірки на своєму комп'ютері вистачить оновлення без кешу:
 **Ctrl + Shift + R** (на macOS **Cmd + Shift + R**).
@@ -303,6 +308,10 @@ image: img/stellaris-8.jpg
 Логотип у шапці та іконка вкладки браузера — це файл `assets/logo.png`.
 Замініть його своїм зображенням із такою самою назвою (квадратне, приблизно
 512×512 пікселів).
+
+> Після заміни логотипа збільште число `?v=` у файлі `index.html` — інакше
+> у вкладці браузера ще довго висітиме стара іконка. Див.
+> [розділ 2](#2-локальний-перегляд-сайту).
 
 Щоб **прибрати логотип із шапки**, залиште порожнім рядок `logo:` у файлах
 `site/settings_uk.md` і `site/settings_en.md` — див.
@@ -1473,6 +1482,7 @@ subtitle: Короткий опис сторінки.
 | Формула показана червоним текстом у рамці | У ній є помилка: перевірте дужки й назви команд за довідником KaTeX |
 | Замість діаграми — червоний текст із помилкою | Помилка в синтаксисі Mermaid; текст помилки вказує рядок |
 | Долар у тексті перетворився на формулу | Поставте перед ним зворотну скісну: `\$` |
+| У вкладці стара іконка сайту | Збільште число `?v=` у рядку `<link rel="icon" …>` у файлі `index.html`: іконка кешується окремо й не оновлюється звичайним перезавантаженням |
 | Новий блок показується як звичайний текст | Найімовірніше, браузер тримає в пам'яті стару версію `script.js`. Збільште номер `?v=` в `index.html` — див. [розділ 2](#2-локальний-перегляд-сайту) |
 | Замість карток видно звичайний текст | Пропущено рядок `:::` наприкінці блоку, або в назві блоку є помилка |
 | Рядок `image:` показується як текст | Властивості мають стояти **одразу** під рядком `###`, без порожнього рядка перед ними |
@@ -1629,19 +1639,24 @@ Install the **Live Server** extension, then right-click `index.html` →
 The `.md` text files are always fetched fresh, so content changes appear as
 soon as the page is reloaded.
 
-`style.css` and `script.js`, however, are remembered by the browser. If one of
-those two files was changed and the site still behaves the old way, browsers
-have to be told the file is new. That is what the version number in
-`index.html` is for:
+`style.css`, `script.js` and the logo `assets/logo.png`, however, are
+remembered by the browser. If one of those files was changed and the site still
+behaves the old way, browsers have to be told the file is new. That is what the
+version number in `index.html` is for:
 
 ```html
-<link rel="stylesheet" href="style.css?v=3">
-<script src="script.js?v=3"></script>
+<link rel="icon" type="image/png" href="assets/logo.png?v=16">
+<link rel="stylesheet" href="style.css?v=16">
+<script src="script.js?v=16"></script>
 ```
 
-**Increase the number by one** in both lines (`?v=3`) and every browser will
-fetch the new files. This is needed **only** after `style.css` or `script.js`
-changes — never for content edits.
+**Increase the number by one** in all three lines (`?v=17`) and every browser
+will fetch the new files. This is needed **only** after `style.css`,
+`script.js` or the logo changes — never for content edits.
+
+> A browser keeps the tab icon in a cache of its own, which even a cacheless
+> reload does not clear. So the number must be increased after replacing the
+> logo — otherwise the old icon stays in the tab for a long time.
 
 For a quick check on your own computer a cacheless reload is enough:
 **Ctrl + Shift + R** (on macOS **Cmd + Shift + R**).
@@ -1779,6 +1794,10 @@ the old one. Then nothing has to be changed in the text files.
 
 The logo in the header and the browser-tab icon is the file `assets/logo.png`.
 Replace it with your own image under the same name (square, about 512×512 px).
+
+> After replacing the logo, increase the `?v=` number in `index.html` —
+> otherwise the old icon stays in the browser tab for a long time. See
+> [section 2](#2-previewing-the-site-locally).
 
 To **remove the logo from the header**, leave the `logo:` line empty in
 `site/settings_uk.md` and `site/settings_en.md` — see
@@ -2947,6 +2966,7 @@ merge into one.
 | A formula is shown as red text in a box | It contains a mistake: check the braces and command names against the KaTeX reference |
 | A diagram is replaced by red error text | The Mermaid syntax has an error; the message points at the line |
 | A dollar sign in the text turned into a formula | Put a backslash in front of it: `\$` |
+| The tab still shows the old site icon | Increase the `?v=` number in the `<link rel="icon" …>` line of `index.html`: the icon is cached separately and an ordinary reload does not refresh it |
 | A new block is shown as plain text | Most likely the browser is holding an old copy of `script.js`. Increase the `?v=` number in `index.html` — see [section 2](#2-previewing-the-site-locally) |
 | Cards are shown as plain text | The closing `:::` line is missing, or the block name is misspelled |
 | An `image:` line shows up as text | Properties must come **immediately** after the `###` line, with no blank line before them |

@@ -1889,7 +1889,12 @@ a.partner-plate:focus-visible {
   .logo-band-inner { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
   .partner-list { gap: 1.5rem 2rem; }
 
-  .support-banner { flex-direction: column; align-items: flex-start; }
+  .support-banner { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.25rem var(--component-padding); }
+  /* On a wide screen the text sits in a column at least 22rem across, which is
+     what `flex: 1 1 22rem` asks for. Stacked vertically the same 22rem becomes
+     a minimum *height*, and the banner grows a tall empty gap under the text.
+     Here the block is simply as tall as its own text. */
+  .support-banner-body { flex: 0 1 auto; }
   .support-banner::before { width: 100%; min-height: 4px; height: 4px; background: linear-gradient(90deg, #005bbb 0 50%, #ffd500 50% 100%); }
 }
 

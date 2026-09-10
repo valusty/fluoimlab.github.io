@@ -12,6 +12,12 @@ hero_caption: Лазер у cage-системі · FIL (2026)
 
 ## Керівництво
 
+<!-- ЛЮДИ. Кожен `###` — нова людина.
+     Властивості: role, specialty, image, email, orcid, scholar, website, github.
+     size — окремий розмір фото саме для цієї людини (необов'язково).
+     Щоб додати фото, покладіть файл у теку team/img/
+     і вкажіть його в рядку image: -->
+
 :::people
 ### *Борис Оліфіров*
 role: Керівник лабораторії, PI
@@ -25,7 +31,7 @@ github: https://github.com/wisstock
 
 ### *Валерія Устименко*
 role: Co-PI
-specialty: *PhD Candidate · підготовка зразків, аналіз даних*
+specialty: *PhD Candidate · підготовка зразків, імунофлуоресцентна візуалізація та аналіз даних*
 image: img/ustymenko.JPG
 email: v.ustymenko@kau.edu.ua
 orcid: https://orcid.org/0009-0000-2241-435X
@@ -44,7 +50,7 @@ orcid: https://orcid.org/0000-0002-0473-1703
 
 ### *Олександра Грубіян*
 role: Дослідниця
-specialty: *MSc · прижиттєва візуалізація клітин, культивування клітин*
+specialty: *MSc · культивування клітин та прижиттєва візуалізація, аналіз даних*
 image: img/hrubiian.jpeg
 email: oleksandra.fedchenko@biph.kiev.ua
 orcid: https://orcid.org/0000-0001-5886-2605
@@ -55,6 +61,13 @@ specialty: *PhD · розробка обладнання*
 image: img/sheremet.jpeg
 email: sheremet@biph.kiev.ua
 orcid: https://orcid.org/0000-0001-9951-2943
+
+### *Дана Бірук*
+role: Дослідниця
+specialty: *MSc · прижиттєва візуалізація клітин, аналіз даних*
+image: img/biruk4.jpeg
+email: danabiruk17@gmail.com
+orcid: https://orcid.org/0009-0001-9812-1040
 
 :::
 

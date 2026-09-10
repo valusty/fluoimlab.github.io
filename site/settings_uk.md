@@ -76,7 +76,7 @@ collaborators_logo_size: 3rem
 ### Kyiv Academic University
 url: https://kau.org.ua/
 image: img/kau_logo.png
-size: 5.5rem
+size: 6rem
 
 ### Kyiv Aviation Institute
 url: https://nau.edu.ua/
